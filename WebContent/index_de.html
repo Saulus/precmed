@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<title>EHealthCheck v2</title>
+<style>
+
+@import url(index2.css);
+
+
+</style>
+<script src="js/d3.min.js"></script>
+<script src="js/jquery-2.1.4.min.js"></script>
+<script>
+	//var ehealthurl = 'http://localhost:8080/EHealthCheck/';
+	var ehealthurl = window.location.protocol + "//" + window.location.host +  "/EHealthCheck/";
+	
+	var graphhurl = window.location.protocol + "//" + window.location.host +  "/graph/";
+	
+	var lang="DE"; //DE
+	var version=2; //Defines JSON response version
+	
+	var topX = 10;
+	
+	var demo_patient = 644;
+	
+	var chart_width = 580, chart_height=580;
+
+	//var color = d3.scale.category20c();
+	var color = d3.scale.ordinal()
+    .domain(["AMB","KH","Acute","Subacute","Chronic","Akut","Subakut","Chronisch"])
+    .range(["#E14705","#F87301","#F87301", "#ED5F03", "#E14705","#F87301", "#ED5F03", "#E14705"]);
+	
+</script>
+
+
+<header>
+</header>
+
+<img id="theImg" src="img/page-loader.gif" visibility="hidden" />
+<section id="global">
+<div id="selection">
+<span class="heading">Patientenakte</span>
+	<ul class = "container_row basic_container">
+		<li class="container_item item1" >
+			<div style="margin: auto; font-size: 0.6em; text-align: center;"><input type="image" class="button2" src="img/download.png" id="import" value="Import" />
+			<br>Importieren
+			</div>
+			<div class="abstand_hor"></div>
+			<div class = "container_row">
+			<div style="margin: auto;font-size: 0.6em; text-align: center;"><img width=20 height=20 src="img/patientfemale.png" />
+			<br><img width=20 height=20 src="img/patientmale.png" />
+			</div>
+			<div style="margin: auto;font-size: 1em;line-height: 90%; text-align: left;">Auswahl<br>Beispiel<br>Patient</div>
+			<div style="margin: auto;font-size: 1em; text-align: center;">No. <input type="number" id="demo" value="1" min="0" max="100" /></div>
+			</div>
+			<div class="abstand_hor"></div>
+			<div style="margin: auto;font-size: 0.6em; text-align: center;"><input type="image" class="button2" src="img/delete.png" id="reset" value="Reset" />
+			<br>Reset
+			</div>
+			
+		<li class="abstand_hor"> </li>
+		<li class="container_item item0">Alter des Patienten:<input type="number" id="alter" value="65" min="0" max="124" /></li>
+		<li class="container_item item0">	
+		Geschlecht:<select id="geschlecht">
+				<option value=1>Female</option>
+				<option value=2 selected>Male</option>
+			</select>
+		</li>
+		<li class="container_item item0">
+		Anzahl Verschreibungen:<input type="number" id="atc" value="5" min="0" max="1000"  />
+		<br><small>(Alle Medikamente in den letzten 12 Mon.)</small>
+		</li>
+	</ul>
+<ul class="container_row selection_container">
+  <li class="container_item item1">
+	Krankheits-Auswahl (letzte 12 Monate)<br>
+	
+    <div>
+        <select id="leftValuesKNR" class="valueList" size="12" multiple></select>
+		<select id="leftValuesKNRhidden" hidden=True></select><br>
+		<small>Suche: <input type="text" id="searchKNR" class="searchBox" /><input type="image" src="img/delete.png" id="clearSearchKNR" value=".d." /></small>
+	</div>
+	
+	
+ 		<div class="container_col">
+			<div class="container_row">
+				<input type="image" class="button amb" src="img/doctor_acute.png" id="btnKNRa" value="Ambulatory acute" />
+				<input type="image" class="button kh"  src="img/hospital_acute.png" id="btnKNR_KHa" value="Hospital acute" />
+			</div>
+			<div class="container_row">
+				<input type="image" class="buttonwide button amb"  src="img/doctor_hospital.png" id="btnKNR" value="Both" />
+			</div>
+		</div>
+		
+  </li>
+  <li class="abstand_hor"> </li>
+  <li class="disease_container">
+	<ul class="container_col">
+		<li class="half_selection">
+			<ul class="container_row">
+				<li class="container_item item2 amb">
+					<b>Ambulante Fälle</b><br>
+					<small>Letzte <u>3 Monate</u>:</small>
+					<div>
+						<img class="container_image" src="img/doctor_acute.png" align="top"/>
+						<select id="rightValuesKNRa" class="valueList" size="5" multiple></select>
+					</div>
+				</li>
+				<li class="container_item item2 kh">
+					<b>Krankenhaus-Einweisungen</b><br>
+					<small>Letzte <u>3 Monate</u>:</small>
+					<div>
+						<img class="container_image" src="img/hospital_acute.png" align="top" />
+						<select id="rightValuesKNR_KHa" class="valueList" size="5" multiple></select>
+					</div>
+				</li>
+			</ul>
+		</li>
+		<li class="abstand_ver"> </li>
+		<li>
+			<div class="container_item item3">
+			<small><u>4-12 Monate</u> vor Heute:</small>
+			<div>
+				<img class="container_image" src="img/doctor.png" align="top" />
+				<img class="container_image" src="img/hospital.png" align="top" />
+				<select id="rightValuesKNR" class="valueList_big" size="4" multiple></select>
+			</div>
+			</div>
+		</li>
+	</ul>
+  </li>
+</ul>
+</div>
+<div id="en_de"><a id="link_en">EN</a>|<a id="link_de">DE</a></div>
+</div>
+<div id="results">
+<span class="heading">Top risk scores</span>
+<!-- <small>for the upcoming 12 months</small>-->
+<form id="mode_form">
+  <label><input type="radio" name="mode" value="ABS" checked> Absoluter Risiko-Score</label>
+  <label><input type="radio" name="mode" value="REL"> Relativer Risiko-Faktor</label>
+</form><p>
+<!--<svg class="chart"></svg>-->
+<ul class="charts">
+<li class="chart_list">Ambulante Diagnosen in den nächsten 12 Monaten<svg class="chart" id="chart_amb"></svg></li>
+<li class="chart_list">Krankenhaus-Einweisungen in den nächsten 3 Monaten<svg class="chart" id="chart_kh"></svg></li>
+</ul>
+</div>
+</section>
+<div id="tooltip" class="hidden">
+  <p><strong id="t_heading"></strong></p>
+  <p><span id="t_absrisk"></span></p>
+  <p><span id="t_relrisk"></span></p>
+  <p><span id="t_prev"></span></p>
+  <p><span id="t_auc"></span></p>
+   <p><span id="t_link"></span></p>
+</div>
+
+<script>
+<!-- INIT -->
+var KNRlist = [];
+load("KNR","#leftValuesKNR");
+$.getJSON( ehealthurl+'Demo', function( jsondata ) {
+	$("#demo").attr("max",jsondata);
+});
+<!-- load("ATC","#leftValuesATC"); -->
+
+//writelegend ();
+
+
+<!-- LOADER -->
+function load(loader,form) {
+	var myurl=ehealthurl+'Knr'+'?lang='+lang;
+	var myvar='KNRlist';
+	var intsort=true;
+
+	if (loader=="KNR_KH") {
+		var myurl=ehealthurl+'Knr';
+		var myvar='KNR_KHlist';
+		var intsort=true;
+	}
+	if (loader=="ATC") {
+		var myurl=ehealthurl+'ATC';
+		var myvar='ATClist';
+		var intsort=false;
+	}
+	
+	$(form).find('option').remove();
+	if (window[myvar].length == 0) getfromurl(myurl,myvar,form,intsort);
+	else {
+		for (i = 0; i < window[myvar].length; i++) {
+			$(form).append('<option value=' + window[myvar][i].key + ' title="' + window[myvar][i].value + '">' + window[myvar][i].value + '</option>');
+		}
+	}
+}
+
+function getfromurl(url,variable,form,intsort) {
+	$.getJSON( url, function( jsondata ) {
+		var data = $.map(jsondata,function(value,key) { return {"key":key,"value":value};} );
+		data = sortArray(data,intsort);
+		/*
+		data = data.sort(function (a, b) {
+			if (intsort) {
+				var c =  parseInt(a.key),
+					d = parseInt(b.key);
+			} else {
+				var c =  a.key,
+					d = b.key;
+			}
+			return c > d ? 1 :
+				   d < c ? -1 :
+				   0;       
+		});*/
+		//console.log(data);
+		for (i = 0; i < data.length; i++) {
+			$(form).append('<option value=' + data[i].key + ' title="' + data[i].value + '">' + data[i].value + '</option>');
+		}
+		window[variable]=data;
+	});
+}
+
+<!-- ACTIONS -->
+
+$("#searchKNR").on('keyup', function() {
+	search("#leftValuesKNR",$(this).val(),true);
+});
+
+$("#clearSearchKNR").click(function () {
+	clearsearch("#leftValuesKNR",true,"#searchKNR");
+});
+
+
+$("#btnKNRa").click(function () {
+	move("#leftValuesKNR","#rightValuesKNRa",true);
+});
+
+$("#rightValuesKNRa").change(function () {
+	clearitem("#rightValuesKNRa");
+});
+
+
+$("#btnKNR").click(function () {
+	move("#leftValuesKNR","#rightValuesKNR",true);
+});
+
+$("#rightValuesKNR").change(function () {
+	clearitem("#rightValuesKNR");
+});
+
+
+$("#btnKNR_KHa").click(function () {
+	move("#leftValuesKNR","#rightValuesKNR_KHa",true);
+});
+
+$("#rightValuesKNR_KHa").change(function () {
+	clearitem("#rightValuesKNR_KHa");
+});
+
+/*
+$("#btnKNR_KH").click(function () {
+	move("#leftValuesKNR","#rightValuesKNR_KH",true);
+});
+
+$("#rightValuesKNR_KH").change(function () {
+	clearitem("#rightValuesKNR_KH");
+});
+*/
+
+$("#alter").change(function () {
+	GO();
+});
+
+$("#geschlecht").change(function () {
+	GO();
+});
+
+$("#atc").change(function () {
+	GO();
+});
+
+$("#import").click(function () {
+	$("#demo").val(demo_patient).change();
+	//alert("Import der Patientenakte des Patienten "+ demo_patient + " erfolgreich durchgeführt.");
+});
+
+$("#demo").change(function () {
+	reset();
+	var myurl=ehealthurl+'Demo'+'?patient='+$("#demo").val();
+	$.getJSON( myurl, function( jsondata ) {
+		$.each(jsondata, function (key, value) {
+			if (key == "knr") {addListToForm(value,"KNRlist","#rightValuesKNR",true);}
+			else if (key == "akut_knr") {addListToForm(value,"KNRlist","#rightValuesKNRa",true);}
+			/*else if (key == "kh_knr") {addListToForm(value,"KNRlist","#rightValuesKNR_KH",true);}*/
+			else if (key == "kh_akut_knr") {addListToForm(value,"KNRlist","#rightValuesKNR_KHa",true);}
+			else $("#"+key).val(value);
+		})
+		GO();
+	});
+});
+
+$("#reset").click(function () {
+	reset();
+});
+
+
+$('#mode_form input').on('change', function() {
+   drawGraphs(); 
+});
+
+
+<!-- GO  -->
+function GO() {
+	var postdata = {};
+	postdata.lang=lang;
+	postdata.version=version;
+	postdata.topX=topX;
+	postdata.alter=$("#alter").val();
+	postdata.geschlecht=$("#geschlecht").val();
+	postdata.atc=$("#atc").val();
+	postdata.acut_knr=[];
+	$("#rightValuesKNRa option").each( function() {
+		postdata.acut_knr.push($(this).val());
+	});
+	postdata.knr=[];
+	$("#rightValuesKNR option").each( function() {
+		postdata.knr.push($(this).val());
+	});
+	postdata.acut_knr_kh=[];
+	$("#rightValuesKNR_KHa option").each( function() {
+		postdata.acut_knr_kh.push($(this).val());
+	});
+	postdata.knr_kh=[];
+	/*$("#rightValuesKNR_KH option").each( function() {
+		postdata.knr_kh.push($(this).val());
+	});*/
+	refreshGraph(JSON.stringify(postdata));
+}
+
+<!-- Helper Functions -->
+function addToForm (item,toForm, intsort) {
+	var added = false;
+	/*$(item).fadeOut("fast", function() {*/
+	if (intsort) {
+				var selectint = parseInt($(item).val());
+				$(toForm+" option").each(function(){
+					if (parseInt($(this).val()) == selectint) {
+						added = true;
+						return false;
+					} else if (parseInt($(this).val()) > selectint) {
+						/*$(item).insertBefore($(this)).fadeIn("fast");*/
+						$(item).clone().insertBefore($(this));
+						added = true;
+						return false;
+					}
+				});
+			} else {
+						var selectint = $(item).val();
+						$(toForm+" option").each(function(){
+										if ($(this).val() == selectint) {
+											added = true;
+											return false;
+										} else 
+										if ($(this).val() > selectint) {
+											/*$(item).insertBefore($(this)).fadeIn("fast");*/
+											$(item).clone().insertBefore($(this));
+											added = true;
+											return false;
+										}
+						});
+					}
+			if(!added) {
+				$(item).clone().appendTo($(toForm)).fadeIn("fast");
+			}
+}
+
+function addListToForm (addList,globalVarList,form,intsort) {
+	var added = false;
+	for (i = 0; i < window[globalVarList].length; i++) {
+		if ($.inArray(window[globalVarList][i].key,addList)>-1) {
+			var item = '<option value=' + window[globalVarList][i].key + ' title="' + window[globalVarList][i].value + '">' + window[globalVarList][i].value + '</option>';
+			addToForm(item,form,intsort);
+			added = true;
+		}
+	}
+}
+function move(from,to,intsort) {
+	var selectedItem = $(from+" option:selected");
+    <!--$("#rightValues").append(selectedItem);-->
+    <!-- $("#txtRight").val(selectedItem.text());-->
+    //var targetList =$(to+" option");
+	$(selectedItem).each(function(){
+		var item = $(this);
+		addToForm(item,to,intsort);
+	});
+	GO();
+}
+
+
+function reset() {
+	$("#rightValuesKNRa").find('option').remove();
+	$("#rightValuesKNR").find('option').remove();
+	$("#rightValuesKNR_KHa").find('option').remove();
+	//$("#rightValuesKNR_KH").find('option').remove();
+	
+	clearsearch("#leftValuesKNR",true,"#searchKNR");
+	//$("#leftValuesKNR").find('option').remove();
+	//$("#leftValuesKNRhidden").find('option').remove();
+	//load("KNR","#leftValuesKNR");
+	
+	
+	d3.selectAll(".chart > *").remove();
+	
+	//$("#demo").val(0);
+	//$("#alter").val(40);
+	$("#atc").val(0);
+}
+
+function clearitem(form) {
+	var selectedItem = $(form+" option:selected");
+	$(selectedItem).remove();
+	GO();
+}
+
+
+function search(searchform,term,intsort) {
+	var hiddenform = searchform+"hidden";
+	var sterm = term.toLowerCase();
+	//var targetList =$(searchform+" option");
+	//1st: hide all irrelevant
+	$(searchform+" option").each(function(){
+				if ($(this).text().toLowerCase().indexOf(sterm) >=0) {
+					$(this).prop('selected', true);
+				} else {
+					$(this).prop('selected', false);
+					$(this).appendTo($(hiddenform));
+				}
+	});
+	var hiddenList =$(hiddenform+" option");
+	$(hiddenList).each(function(){
+				if ($(this).text().toLowerCase().indexOf(sterm) >=0) {
+					var added = false;
+					var item = $(this);
+					if (intsort) {
+						var selectint = parseInt($(item).val());
+						$(searchform+" option").each(function(){
+							if (parseInt($(this).val()) > selectint) {
+								$(item).insertBefore($(this));
+								added = true;
+								return false;
+							}
+						});
+					} else {
+						var selectint = $(item).val();
+						$(searchform+" option").each(function(){
+										if ($(this).val() > selectint) {
+											$(item).insertBefore($(this));
+											added = true;
+											return false;
+										}
+						});
+					}
+					if(!added) {
+						$(item).appendTo($(searchform));
+					}
+					//$(this).appendTo($(searchform));
+					$(this).prop('selected', true);
+					//move(hiddenform,searchform);
+				}
+	});
+}
+
+function clearsearch(searchform,intsort,searchinputfield) {
+	$(searchinputfield).val('');
+	var hiddenform = searchform+"hidden";
+	//var targetList =$(searchform+" option");
+	var hiddenList =$(hiddenform+" option");
+	$(hiddenList).each(function(){
+			var added = false;
+			var item = $(this);
+			if (intsort) {
+				var selectint = parseInt($(item).val());
+				$(searchform+" option").each(function(){
+								if (parseInt($(this).val()) > selectint) {
+									$(item).insertBefore($(this));
+									added = true;
+									return false;
+								}
+				});
+			} else {
+				var selectint = $(item).val();
+				$(searchform+" option").each(function(){
+								if ($(this).val() > selectint) {
+									$(item).insertBefore($(this));
+									added = true;
+									return false;
+								}
+				});
+			}
+			if(!added) {
+				$(item).appendTo($(searchform));
+			}
+	});
+	$(searchform+" option:selected").prop("selected", false)
+}
+
+<!-- Grafik functions -->
+
+
+	var div_amb = d3.select("#chart_amb");
+	
+	var div_kh = d3.select("#chart_kh");
+	
+	var graphdata = null;
+
+
+function refreshGraph(parameters) {
+	d3.select('#theImg').style("visibility","visible");
+	d3.json(ehealthurl+'EHealthCheck').post(parameters,
+	  function (error,jsondata) {
+		if (error) return console.warn(error);
+		
+		graphdata=jsondata;
+
+		drawGraphs();
+		
+		d3.select('#theImg').style("visibility","hidden");
+	});
+}
+
+function drawGraphs () {
+	if (graphdata != null) {
+		drawGraph($('input[name=mode]:checked', '#mode_form').val(),"AMB",div_amb);
+		drawGraph($('input[name=mode]:checked', '#mode_form').val(),"KH",div_kh);
+	}
+}
+		
+function drawGraph(type_abs_rel,type_amb_kh,chart) {
+
+	chart.selectAll("g").remove();
+
+	var w = chart_width,
+	    h = chart_height,
+	    x = d3.scale.linear().range([0, w]),
+	    y = d3.scale.linear().range([0, h]),
+		kx_child_faktor = 2; //make last child (=riks) x times wider
+		
+	//find correct subtree
+	var subtree = graphdata;
+	for (i=0; i< graphdata.children.length; i++) {
+		if (graphdata.children[i].type == type_abs_rel) {
+			for (j=0; j< graphdata.children[i].children.length; j++) {
+				if (graphdata.children[i].children[j].type == type_amb_kh) {
+					subtree=graphdata.children[i].children[j];
+					break;
+				}
+			}
+			break;
+		}
+	}
+
+	var partition = d3.layout.partition()
+	    .value(function(d) { return type_abs_rel == "ABS" ? d.risk : d.rrisk; })
+		.sort(null);
+
+	// d3.json(JSON_FILE, function(root) {
+	  var g = chart.selectAll("g")
+	      .data(partition.nodes(subtree))
+	    .enter().append("svg:g")
+	      .attr("transform", function(d) { return d.children ? 
+				"translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"
+				: "translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"; })
+		.on("mousemove", mousemove)
+          .on("mouseout", mouseout)
+		  .on("click", click_link);
+	     ;
+
+	  var kx = w,
+	      ky = h / 1;
+
+	  g.append("svg:rect")
+	      .attr("width", function(d) { return d.children ? 
+					kx * d.dy / kx_child_faktor :
+					kx * d.dy * kx_child_faktor })
+	      .attr("height", function(d) { return d.dx * ky; })
+	      .attr("class", function(d) { return d.children ? "parent" : "child"; })
+		  .attr("fill",function(d) { 
+					if (!d.children && !d.isnew) return "#a7a8aa";
+					else return color(d.type);
+				});
+
+	  g.append("svg:text")
+	      .attr("transform", transform)
+	      .attr("width", function(d) { return d.children ? 
+					kx * d.dy / kx_child_faktor :
+					kx * d.dy * kx_child_faktor })
+		  .attr("x", ".35em")
+		  .attr("dy", ".1em")
+		  .attr("class", function(d) { return d.children ? "parent" : "child"; })
+		  /*.attr("fill",function(d) { 
+					if (!d.children && !d.isnew) return "#353535";
+				})*/
+	      .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
+	      .text(function(d) { return d.children ?  d.name : type_abs_rel == "ABS" ? d.name + ", Risiko: " + d.risk : d.name + ", rel. Risiko: " + d.rrisk; })
+		  .call(wrap);
+		  
+	 function transform(d) {
+	    return "translate(8," + d.dx * ky / 2 + ")";
+	  }
+			  
+}
+
+function wrap(text) {
+  text.each(function() {
+    var text = d3.select(this),
+		width = text.attr("width")-5,
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1, // ems
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
+ }
+
+  function click_link(d) {
+	    if (d.children) return;
+		window.open("https://www.clinicalkey.com/#!/search/"+d.name.substr(0,d.name.indexOf("(")));
+	  }
+ //TOOLTIP functions
+ 	var mousemove = function(d) {
+	  var xPosition = d3.event.pageX + 5;
+	  var yPosition = d3.event.pageY + 5;
+
+	  d3.select("#tooltip")
+		.style("left", xPosition + "px")
+		.style("top", yPosition + "px");
+	 d3.select("#tooltip #t_heading")
+			.text(d.name);
+	  if (d.children) {
+		d3.select("#tooltip #t_absrisk")
+			.text(null);
+		  d3.select("#tooltip #t_relrisk")
+			.text(null);
+		  d3.select("#tooltip #t_prev")
+			.text(null);
+		  d3.select("#tooltip #t_auc")
+			.text(null);
+		  d3.select("#tooltip #t_link")
+			.text(null);
+	  } else {
+		  d3.select("#tooltip #t_absrisk")
+			.text("Abs. Risk: " +d.risk);
+		  d3.select("#tooltip #t_relrisk")
+			.text("Rel. Risk: " + d.rrisk);
+		  d3.select("#tooltip #t_prev")
+			.text("Prevalence: " + d.praevalenz);
+		  d3.select("#tooltip #t_auc")
+			.text("AUC: " + d.auc);
+		  d3.select("#tooltip #t_link")
+			.text("-> Click for ClinicalKey Content");
+	 }
+		  d3.select("#tooltip").classed("hidden", false);
+	};
+
+	var mouseout = function() {
+	  d3.select("#tooltip").classed("hidden", true);
+	};
+
+	/* my very own sorting function, as jQuery sort is not working in Chrome */
+function sortArray(array, intsort) {
+	var map = [],
+		result = [];
+
+	for (var i=0, length = array.length; i < length; i++) {
+	  map.push({
+		index: i, // remember the index within the original array
+		value: (intsort) ? parseInt(array[i].key) : array[i].key // evaluate the element
+	  });
+	}
+
+	// sorting the map containing the reduced values
+	map.sort(function(a, b) {
+	  return a.value > b.value ? 1 : -1;
+	});
+
+	// copy values in right order
+	for (var i=0, length = map.length; i < length; i++) {
+	  result.push(array[map[i].index]);
+	}
+
+	 return result;
+}
+
+</script>
+
+<script>
+document.getElementById("link_en").setAttribute("href",ehealthurl+"index.html");
+	document.getElementById("link_de").setAttribute("href",ehealthurl+"index_de.html");
+</script>

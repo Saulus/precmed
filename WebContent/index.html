@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<header>
+<meta charset="utf-8">
+
+<title>Precision Medicine v0.1</title>
+<style>
+
+@import url(index.css);
+
+
+</style>
+<script src="js/d3.min.js"></script>
+<script src="js/jquery-2.1.4.min.js"></script>
+<script src="js/colorbrewer.js"></script>
+<script>
+	var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
+	//var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
+	
+	var graphhurl = window.location.protocol + "//" + window.location.host +  "/graph/";
+	
+	var lang="EN"; //DE
+	
+	var topX = 10;
+	
+	var demo_patient = 644;
+
+	var color = d3.scale.ordinal()
+    .domain(["","1","2","7","3","6","4","5"])
+	.range(colorbrewer.Paired[8]);
+	//.range(colorbrewer.Reds[8]);
+    //.range(["#E14705","#F87301","#F87301", "#ED5F03", "#E14705","#F87301", "#ED5F03", "#E14705"]);
+	
+		
+	//var color = d3.scale.category20b();
+	
+</script>
+</header>
+<body>
+
+<img id="theImg" src="img/page-loader.gif" visibility="hidden" />
+
+<section id="global">
+<div class="mainpart">
+	<div class="container_row">
+			<div style="margin: auto; font-size: 0.6em; text-align: center;"><input type="image" class="button2" src="img/download.png" id="import" value="Import" />
+			<br>Import from EHR
+			</div>
+			<div class = "container_row">
+			<div style="margin: auto;font-size: 0.6em; text-align: center;"><img width=20 height=20 src="img/patientfemale.png" />
+			<img width=20 height=20 src="img/patientmale.png" />
+			</div>
+			<div style="margin: auto;font-size: 0.9em;line-height: 90%; text-align: left;">Select example patient</div>
+			<div style="margin: auto;font-size: 0.9em; text-align: center;">No. <input type="number" id="demo" value="1" min="1" max="1000" /></div>
+			</div>
+			<div style="margin: auto;font-size: 0.6em; text-align: center;"><input type="image" class="button2" src="img/delete.png" id="reset" value="Reset" />
+			<br>Reset all
+			</div>
+	</div>
+			<div id="en_de"><a id="link_en">EN</a> | <a id="link_de">DE</a><br><a id="link_graph" target="graph"><img src="img/graph_icon.png" width=45 height=24 align="top"><small>Graph</small></a></div>
+	</div>
+</div>
+<div class="abstand_ver"> </div>
+<div class="superheading">Risk predictions, powered by the Elsevier Medical Graph</div>
+<div class="mainpart">
+	<span class="heading">Patient health record</span>
+	<ul class = "container_row basic_container">		
+		<li class="container_item item0">Patient's age:<input type="number" id="ALTER" value="65" min="0" max="124" /></li>
+		<li class="container_item item0">	
+		Sex:<select id="GESCHLECHT">
+				<option value=1>Female</option>
+				<option value=2 selected>Male</option>
+			</select>
+		</li>
+	</ul>
+	<ul class="container_row selection_container">
+					<li class="container_item item2">
+						<div style="position: relative;"><b>Current diseases</b>, <small>i.e. last 12 months</small> <div class="adder"><input type="button" class="button3" id="add_ICD" value="ADD" /></div></div>
+						<div>
+						<img class="container_image" src="img/doctor.png" align="top"/>
+							<select id="valuesICD" class="valueList" size="8" multiple></select>
+						</div>
+					</li>
+					<li class="container_item item2">
+						<div style="position: relative;"><b>Current medications</b>, <small>i.e. last 12 months</small><div class="adder"><input type="button" class="button3" id="add_ATC" value="ADD" /></div></div>
+						<div>
+							<img class="container_image" src="img/pills.png" align="top" />
+							<select id="valuesATC" class="valueList" size="8" multiple></select>
+						</div>
+					</li>
+	</ul>
+	<div id="ICDselector" class="container_item selector">
+		<b>Add current diseases by ICD</b><br>
+		<small>Search: <input type="text" id="searchICD" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchICD" value=".d." /></small><br>
+		<input class="button1" type="image" src="img/add.png" id="addICD" value=".d." align="top"/>
+		<select id="optionsICD" class="valueList selectorlist" size="12" multiple></select><br>
+		<select id="optionsICDhidden" hidden=True></select><br>
+	</div>
+	<div id="ATCselector" class="container_item selector">
+		<b>Add current medications by ATC</b><br>
+		<small>Search: <input type="text" id="searchATC" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchATC" value=".d." /></small><br>
+		<input class="button1" type="image" src="img/add.png" id="addATC" value=".d." align="top"/>
+		<select id="optionsATC" class="valueList selectorlist" size="12" multiple></select>
+		<select id="optionsATChidden" hidden=True></select><br>
+	</div>
+</div>
+<div class="abstand_ver"> </div>
+<div class="mainpart">
+	<span class="heading">Top risks and treatments</span><p>
+	<div class="adder"><input type="button" class="button3" id="configure" value="CONFIGURE" /></div>
+	<div id="configurator" class="container_item selector modeselector">
+		<form id="view_form">
+		View format: <label><input type="radio" name="view" value="GRAPH"> Graph view</label>
+		  <label><input type="radio" name="view" value="LIST" checked> List view</label>
+		 </form><p>
+		<form id="mode_form">
+		  Score base: <label><input type="radio" name="mode" value="ABS" checked> Absolute risk score</label>
+		  <label><input type="radio" name="mode" value="REL"> Relative risk factor</label>
+		</form>
+	</div>
+<!--<svg class="chart"></svg>-->
+<div id="charts" class="charts">
+<div class="chart_list">Future diseases, incident <svg class="chart" id="chart_left"></svg></div>
+<div class="chart_list">Medications to consider <svg class="chart" id="chart_right"></svg></div>
+</div>
+<div id="chart_graph" class="hidden" ><svg class="chart" id="thegraph"></svg></div>
+</div>
+</section>
+<div id="tooltip" class="hidden">
+  <p><strong id="t_heading"></strong></p>
+  <p><span id="t_absrisk"></span></p>
+  <p><span id="t_relrisk"></span></p>
+  <p><span id="t_prev"></span></p>
+  <p><span id="t_inc"></span></p>
+  <p><span id="t_mean_age"></span></p>
+   <p><span id="t_link"></span></p>
+</div>
+
+<script src="js/precmedicine.js"></script>
+
+<script>
+document.getElementById("link_en").setAttribute("href",ehealthurl+"index.html");
+	document.getElementById("link_de").setAttribute("href",ehealthurl+"index_de.html");
+	document.getElementById("link_graph").setAttribute("href",graphhurl);
+</script>
+</body>

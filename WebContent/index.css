@@ -1,0 +1,438 @@
+html, body {
+background-color: #eee;
+}
+
+#global {
+	width: 1050px;
+	/* overflow-y: hidden;*/
+	text-align: center;
+	font-family: Arial, Sans-serif;
+	margin: auto;
+	/* padding: 8px;
+    background-color: #f0f0f0; */
+    overflow: none;
+}
+
+.superheading {
+	font-weight: bold;
+	color: rgb(255, 130, 0);
+}
+
+#en_de {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	text-align: right;
+	font-size: 0.8em;
+	z-index: 9;
+ }
+
+ 
+#theImg {
+	 position: fixed;
+	top: 500px;
+	left: 49%;
+	width: 50px;
+	height: 50px;
+	visibility : hidden;
+	z-index: 100;
+}
+
+div {
+	padding: 2px;
+}
+
+
+INPUT {
+	background: #fbfbfb;
+	background-color: #fbfbfb;
+
+	   border-style:none;
+        border-width:1px;
+		border-color:#fbfbfb; 
+}
+
+input[type="number"] {
+   width:50px;
+}
+
+SELECT {
+	background: #fbfbfb;
+	background-color:#fbfbfb;
+	
+	   border-style:none;
+        border-width:1px;
+		border-color:#fbfbfb; 
+}
+
+
+.heading {
+font-size: 1.2em;
+font-weight: bold;
+}
+
+.mainpart { position: relative;   
+      width: 99%;    
+	   border-style:solid;
+		background-color:rgba(255,255,255,0.8);
+		border:1px solid #ccc;
+	   color: black;
+	   
+	 font-weight: bold;
+	   margin: auto;
+	   
+	   text-align: left;
+	/* padding: 8px;
+    background-color: #f0f0f0; */
+    overflow: none;
+	padding-left:5px;
+}   
+
+.container_row {
+	padding:0;
+  margin: left;
+  list-style: none;
+  
+  font-weight: bold; 
+   text-align: left;
+  
+  -ms-box-orient: horizontal;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -moz-flex;
+  display: -webkit-flex;
+  display: flex;
+  
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+}
+
+.container_col {
+	padding:0;
+  margin: left;
+  list-style: none;
+  height:100%;
+  
+  font-weight: bold; 
+   text-align: left;
+  
+ -ms-box-orient: vertical;
+	  display: -webkit-box;
+	  display: -moz-box;
+	  display: -ms-flexbox;
+	  display: -moz-flex;
+	  display: -webkit-flex;
+	  display: flex;
+	  
+	  -webkit-flex-wrap: wrap;
+	  flex-wrap: wrap;
+	  -webkit-flex-direction: column;
+	  flex-direction: column;
+}
+
+
+.basic_container {
+ font-size: 1em;
+ height: 30px;
+ color: black;
+}
+
+.selection_container {
+ font-size: 1.2em;
+ color: black;
+ height: 170px;
+}
+
+
+
+
+.container_item {
+  padding: 5px;
+  height: 100%;
+  margin: left;
+  
+  border-style:solid;
+		background-color: #eee;
+		border:1px solid #ccc;
+}
+
+.item0 {
+	background: rgb(255, 130, 0);
+}
+.selector {
+	font-weight: normal;
+	width: 500px;
+		background-color:rgb(238,238,238);
+		
+-webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+	
+	position: fixed;
+	height:auto;
+	top: 5px;
+	left: 5px;
+	z-index: 12;
+	
+	display: block;	
+	display: none;	
+}
+
+.modeselector {
+	width: 450px;
+}
+
+.selectorlist {
+background-color:rgba(251,251,251,0.9);
+}
+
+.item2 {
+	font-weight: normal;
+	width: 500px;
+	background: rgb(255, 130, 0);
+}
+
+.adder {
+	font-weight: bold;
+	font-size: 0.6em;
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	text-align: right;
+}
+
+
+
+.abstand_hor {
+width: 15px;
+}
+
+.abstand_ver {
+height: 5px;
+}
+
+
+.buttons {
+	padding: 0;
+	margin: 0;
+	display: flex;
+  
+  -ms-box-orient: vertical;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -moz-flex;
+  display: -webkit-flex;
+  display: flex;
+  
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+}
+
+.button1{
+width: 33px;
+height: 33px;
+background: rgb(238,238,238);
+}
+
+
+.button1:hover {
+background: rgb(220, 68, 5);
+}
+
+
+.button2{
+width: 33px;
+height: 33px;
+background: rgb(167, 168, 170);
+
+    border-style:none;
+    border-width:1px;
+    border-color:white; 
+}
+
+
+.button2:hover {
+background: rgb(220, 68, 5);
+}
+
+.button3{
+background: #eee;
+font-weight: bold;
+
+    border-style:none;
+    border-width:1px;
+    border-color:white; 
+}
+
+
+.button3:hover {
+background: rgb(220, 68, 5);
+}
+
+.button4{
+width: 22px;
+height: 22px;
+
+    border-style:none;
+	
+		padding:0;
+	vertical-align: middle;
+}
+
+
+.button4:hover {
+background: rgb(220, 68, 5);
+}
+
+
+
+
+
+.valueList {
+	width: 450px;
+}
+
+.valueList_big {
+	width: 620px;
+}
+
+.searchBox {width: 200px}
+
+.container_image {
+	width: 35px;
+	height: 35px;
+}
+
+
+.charts {
+padding:0;
+  list-style: none;
+  
+  color: black;
+  font-weight: bold; 
+   text-align: left;
+  
+  
+-ms-box-orient: horizontal;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -moz-flex;
+  display: -webkit-flex;
+  display: flex;
+  
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+
+}
+
+.chart_list {
+margin: auto;
+	width: 500px;
+	font-size: 1.2em;
+}
+
+.chart {
+	height: 530px; 
+	position: relative;
+	width: 500px;
+  display: block;
+  margin: auto;
+  font-size: 12px;
+  text-align:left;
+}
+
+#chart_graph {
+margin: auto;
+	width: 1000px;
+	height: 530px; 
+	font-size: 1.2em;
+}
+
+#thegraph {
+	height: 530px; 
+	position: relative;
+	width: 1000px;
+  display: block;
+  margin: auto;
+  font-size: 12px;
+  text-align:left;
+}
+
+
+
+text.parent {
+	font-weight: bold;
+	 font-style: italic;
+	
+}
+text.child {
+	font-weight: bold;
+	background-color: rgb(255, 130, 0);
+	
+}
+
+rect {
+  stroke: #eee;
+  #fill: darkred;
+  fill-opacity: .9;
+}
+
+rect.child {
+  cursor: pointer;
+}
+
+text {
+  pointer-events: none;
+}
+
+#tooltip {
+  position: absolute;
+  width: 220px;
+  height: auto;
+  padding: 10px;
+  background-color:rgb(238,238,238);
+ 
+  -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.hidden {
+  display: none;
+}
+
+#tooltip p {
+  margin: 0;
+  font-family: sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+#t_link {
+  font-size: 12px;
+}
+
+path.link {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5px;
+}
+
+circle {
+  fill: #ccc;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+
+
