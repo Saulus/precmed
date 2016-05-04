@@ -36,19 +36,39 @@ public class Graphdata {
 		List<String[]> readIn = reader.readAll();
 		reader.close();
 		//first line = header-line
-		//String[] headerline = readIn.get(0);
+		String[] headerline = readIn.get(0);
+		readIn.remove(0);
 		//assign colnumbers for columns needed
 		Integer sourceCol=0;
 		Integer targetCol=1;
-		Integer weightCol=2;
-		Integer weight_originalCol=3;
+		Integer oddsCol=2;
+		Integer oddsTransformedCol=3;
 		Integer prevalence_sourceCol=5;
 		Integer incidence_targetCol=6;
 		Integer incidence_target_conditionSourceCol=7;
 		Integer mean_age_incidence_targetCol=8;
 		Integer mean_age_incidence_target_conditionSourceCol=9;
-		Integer flag_toBeDeletedCol=10;
-		readIn.remove(0);
+		Integer pvalueCol=10;
+		//Integer flag_toBeDeletedCol=10;
+		Integer aucCol=10;
+		Integer ppv1Col=10;
+		Integer betaCol=10;
+		//and re-assign
+		for (int i =0; i<headerline.length; i++) {
+			if (headerline[i].equals("Source")) sourceCol=i;
+			if (headerline[i].equals("Target")) targetCol=i;
+			if (headerline[i].equals("OR")) oddsCol=i;
+			if (headerline[i].equals("p-value")) pvalueCol=i;
+			if (headerline[i].equals("OR transformed")) oddsTransformedCol=i;
+			if (headerline[i].equals("prevalence Source")) prevalence_sourceCol=i;
+			if (headerline[i].equals("incidence Target")) incidence_targetCol=i;
+			if (headerline[i].equals("incidence Target Source")) incidence_target_conditionSourceCol=i;
+			if (headerline[i].equals("Mean age of incident patients")) mean_age_incidence_targetCol=i;
+			if (headerline[i].equals("Mean age of incident patients with Condition Source")) mean_age_incidence_target_conditionSourceCol=i;
+			if (headerline[i].equals("betas")) betaCol=i;
+			if (headerline[i].equals("AUC test set")) aucCol=i;
+			if (headerline[i].equals("PPV 1%")) ppv1Col=i;
+		}
 		if (readIn.size()==0 )
 			throw new Exception("Configuration File is empty");
 		Edge edge;
@@ -56,64 +76,74 @@ public class Graphdata {
 			if (!nextline[sourceCol].isEmpty()) {
 				edge = new Edge();
 				edge.source=nextline[sourceCol].toUpperCase();
+				if (edge.source.equals(Consts.geschlechtattributeOrig)) edge.source=Consts.geschlechtattribute;
+				if (edge.source.equals(Consts.alterattributeOrig)) edge.source=Consts.alterattribute;
+				if (edge.source.equals(Consts.numberATCattributeOrig)) edge.source=Consts.numberATCattribute;
+				if (edge.source.equals(Consts.numberICDattributeOrig)) edge.source=Consts.numberICDattribute;
 				edge.target=nextline[targetCol].toUpperCase();
-				edge.weight=Double.parseDouble(nextline[weightCol]);
-				edge.weight_original=Double.parseDouble(nextline[weight_originalCol]);
-				edge.prevalence_source=Double.parseDouble(nextline[prevalence_sourceCol]);
-				edge.incidence_target=Double.parseDouble(nextline[incidence_targetCol]);
-				edge.incidence_target_conditionSource=Double.parseDouble(nextline[incidence_target_conditionSourceCol]);
-				edge.mean_age_incidence_target=Double.parseDouble(nextline[mean_age_incidence_targetCol]);
-				edge.mean_age_incidence_target_conditionSource=Double.parseDouble(nextline[mean_age_incidence_target_conditionSourceCol]);
-				edge.flag_toBeDeleted=!nextline[flag_toBeDeletedCol].isEmpty();
+				try {edge.or=Double.parseDouble(nextline[oddsCol]);} catch (Exception e) {}
+				try {edge.pvalue=Double.parseDouble(nextline[pvalueCol]);} catch (Exception e) {}
+				try {edge.or_transformed=Double.parseDouble(nextline[oddsTransformedCol]);} catch (Exception e) {}
+				try {edge.prevalence_source=Double.parseDouble(nextline[prevalence_sourceCol]);} catch (Exception e) {}
+				try {edge.incidence_target=Double.parseDouble(nextline[incidence_targetCol])/Consts.incidentYears;} catch (Exception e) {}
+				try {edge.incidence_target_conditionSource=Double.parseDouble(nextline[incidence_target_conditionSourceCol])/Consts.incidentYears;} catch (Exception e) {}
+				try {edge.mean_age_incidence_target=Double.parseDouble(nextline[mean_age_incidence_targetCol]);} catch (Exception e) {}
+				try {edge.mean_age_incidence_target_conditionSource=Double.parseDouble(nextline[mean_age_incidence_target_conditionSourceCol]);} catch (Exception e) {}
+				//edge.flag_toBeDeleted=!nextline[flag_toBeDeletedCol].isEmpty();
+				try {edge.auc=Double.parseDouble(nextline[aucCol]);} catch (Exception e) {}
+				try {edge.ppv1=Double.parseDouble(nextline[ppv1Col]);} catch (Exception e) {}
+				try {edge.beta=Double.parseDouble(nextline[betaCol]);} catch (Exception e) {}
 				mylist.add(edge);
 			}
 		}
-		scaleOdds(mylist);
+		//scaleOdds(mylist);
 		return mylist;
 	}
 	
-	//sclaes odds between 0 and 1
+	//sclaes odds between 0 and 1 
+	/*
 	private void scaleOdds (ArrayList<Edge> edgelist) {
 		double min=0;
 		double max=0;
 		for (Edge edge : edgelist) {
-			if (edge.weight<min) min = edge.weight;
-			if (edge.weight>max) max = edge.weight;
+			if (edge.or<min) min = edge.or;
+			if (edge.or>max) max = edge.or;
 		}
 		for (Edge edge : edgelist) {
 			edge.oddsScaled=(edge.weight-min)/(max-min);
 		}
-	}
+	}*/
 	
 	public Set<String> getTargetList() {
 		return this.targetlist.keySet();
 	}
 	
 		
-	public Double getRisk(String target, HashMap<String,Double> features) {
-		Double log_odds;
-		if (targetlist.get(target).get(Consts.intercept) != null) log_odds =  targetlist.get(target).get(Consts.intercept).weight_original;
-		else log_odds=0.;
+	public double getRisk(String target, HashMap<String,Double> features) {
+		double coeffs;
+		if (targetlist.get(target).get(Consts.intercept) != null) coeffs = targetlist.get(target).get(Consts.intercept).beta; //Math.log(targetlist.get(target).get(Consts.intercept).or);
+		else coeffs=0.;
 		for (String feature : features.keySet()) {
 			if (targetlist.get(target).get(feature) != null)
-				log_odds += features.get(feature) * targetlist.get(target).get(feature).weight_original; 
+				coeffs += features.get(feature) * targetlist.get(target).get(feature).beta; // Math.log(targetlist.get(target).get(feature).or); 
 		}
-		Double odds = Math.exp(log_odds);
-		Double prob = odds / (1+odds);
+		double odds = Math.exp(coeffs);
+		double prob = odds / (1+odds);
 		
 		return prob;
 	}
 	
 	public Double getOdds(String source, String target) {
-		return targetlist.get(target).get(source).weight;
+		return targetlist.get(target).get(source).or;
 	}
 	
-	public Double getOddsScaled(String source, String target) {
-		return targetlist.get(target).get(source).oddsScaled;
+	public Double getOddsTransformed(String source, String target) {
+		return targetlist.get(target).get(source).or_transformed;
 	}
 	
 	public Double getPrevalence(String key) {
 		//by source... any target will suffice
+		if (key.equals(Consts.alterattribute)) return 1.;
 		if (sourcelist.containsKey(key)) 
 			return sourcelist.get(key).entrySet().iterator().next().getValue().prevalence_source;
 		else return 0.;
@@ -124,6 +154,7 @@ public class Graphdata {
 		if (!targetlist.containsKey(key)) return 0.;
 		return targetlist.get(key).entrySet().iterator().next().getValue().incidence_target;
 	}
+	
 	
 	public Double getIncidenceConditionSource(String source, String target) {
 		if (!targetlist.containsKey(target) || !targetlist.get(target).containsKey(source)) return 0.;
@@ -141,6 +172,12 @@ public class Graphdata {
 		if (!targetlist.containsKey(target) || !targetlist.get(target).containsKey(source)) return 0.;
 		return targetlist.get(target).get(source).mean_age_incidence_target_conditionSource;
 	}
+	
+	public Double getPvalue(String source, String target) {
+		if (!targetlist.containsKey(target) || !targetlist.get(target).containsKey(source)) return 0.;
+		return targetlist.get(target).get(source).pvalue;
+	}
+	
 	
 	public boolean isEdgeUnimportant(String source, String target) {
 		if (!targetlist.containsKey(target) || !targetlist.get(target).containsKey(source)) return false;

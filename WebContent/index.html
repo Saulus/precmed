@@ -2,7 +2,7 @@
 <header>
 <meta charset="utf-8">
 
-<title>Precision Medicine v0.1</title>
+<title>Precision Medicine v0.2</title>
 <style>
 
 @import url(index.css);
@@ -11,7 +11,10 @@
 </style>
 <script src="js/d3.min.js"></script>
 <script src="js/jquery-2.1.4.min.js"></script>
-<script src="js/colorbrewer.js"></script>
+<!--<script src="js/colorbrewer.js"></script>-->
+<script src="js/jquery-ui/jquery-ui.min.js"></script>
+<!--<link rel="stylesheet" href="js/jquery-ui/jquery-ui.min.css">-->
+<link rel="stylesheet" href="js/jquery-ui/themes/_precisionmedicine/jquery-ui.css">
 <script>
 	var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
 	//var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
@@ -20,14 +23,24 @@
 	
 	var lang="EN"; //DE
 	
-	var topX = 10;
+	//var topX = 10;
 	
 	var demo_patient = 644;
+	
+	var nodeminradius = 10;
+	var nodemaxradius = 20;
+	
+	var numberClusters=6;
 
-	var color = d3.scale.ordinal()
-    .domain(["","1","2","7","3","6","4","5"])
-	.range(colorbrewer.Paired[8]);
-	//.range(colorbrewer.Reds[8]);
+	var color = {
+	"DIS": d3.scale.ordinal().domain(["","5","0","1","4","3","2"]).range(["#fff5f0","#fee0d2","#fcbba1","#fc9272","#fb6a4a","#ef3b2c","#cb181d"]),
+	"MED": d3.scale.ordinal().domain(["","5","0","1","4","3","2"]).range(["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5"])
+	}
+	var colorNodes = {
+	  "DIS": d3.scale.ordinal().domain(["OLD","NEW"]).range(["#ffaaaa","#990000"]),
+	  "MED": d3.scale.ordinal().domain(["OLD","NEW"]).range(["#aaddff","#0033cc"])
+	}
+	
     //.range(["#E14705","#F87301","#F87301", "#ED5F03", "#E14705","#F87301", "#ED5F03", "#E14705"]);
 	
 		
@@ -64,9 +77,10 @@
 <div class="mainpart">
 	<span class="heading">Patient health record</span>
 	<ul class = "container_row basic_container">		
-		<li class="container_item item0">Patient's age:<input type="number" id="ALTER" value="65" min="0" max="124" /></li>
+		<li class="container_item item0">Patient's age: <input type="number" id="AGE" value="65" min="0" max="124" /></li>
+		<li class="abstand_hor" />
 		<li class="container_item item0">	
-		Sex:<select id="GESCHLECHT">
+		Gender:<select id="GENDER">
 				<option value=1>Female</option>
 				<option value=2 selected>Male</option>
 			</select>
@@ -80,6 +94,7 @@
 							<select id="valuesICD" class="valueList" size="8" multiple></select>
 						</div>
 					</li>
+					<li class="abstand_hor" />
 					<li class="container_item item2">
 						<div style="position: relative;"><b>Current medications</b>, <small>i.e. last 12 months</small><div class="adder"><input type="button" class="button3" id="add_ATC" value="ADD" /></div></div>
 						<div>
@@ -89,6 +104,7 @@
 					</li>
 	</ul>
 	<div id="ICDselector" class="container_item selector">
+		<div class="adder"><input type="button" class="button3" id="ICDselectorX" value="X" /></div>
 		<b>Add current diseases by ICD</b><br>
 		<small>Search: <input type="text" id="searchICD" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchICD" value=".d." /></small><br>
 		<input class="button1" type="image" src="img/add.png" id="addICD" value=".d." align="top"/>
@@ -96,6 +112,7 @@
 		<select id="optionsICDhidden" hidden=True></select><br>
 	</div>
 	<div id="ATCselector" class="container_item selector">
+		<div class="adder"><input type="button" class="button3" id="ATCselectorX" value="X" /></div>
 		<b>Add current medications by ATC</b><br>
 		<small>Search: <input type="text" id="searchATC" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchATC" value=".d." /></small><br>
 		<input class="button1" type="image" src="img/add.png" id="addATC" value=".d." align="top"/>
@@ -104,29 +121,109 @@
 	</div>
 </div>
 <div class="abstand_ver"> </div>
-<div class="mainpart">
-	<span class="heading">Top risks and treatments</span><p>
-	<div class="adder"><input type="button" class="button3" id="configure" value="CONFIGURE" /></div>
+<div id="tabs" class="mainpart">
+	<span class="heading">Top risks and treatments</span>
+		<ul>
+			<li><a href="#LIST">List view</a></li>
+			<li><a href="#GRAPH">Graph view</a></li>
+		</ul>
+		<div id="LIST" class="charts" >
+		<div class="chart_list">Future diseases, incident <svg class="chart" id="chart_left"></svg></div>
+		<div class="chart_list">Medications to consider <svg class="chart" id="chart_right"></svg></div>
+		</div>
+		<div id="GRAPH" style="display: none;" ><svg class="chart" id="thegraph"></svg>
+			<div id="nodeoverview">
+				<div class="adder"><input type="button" class="button3" id="nodeoverviewX" value="X" /></div>
+				<div style="overflow: auto; height:430px;">
+					<b>Existing diseases:</b>
+					<ul id="nodeULEx1"class="nodeUL">
+						<!--<li class="nodeLI"><span></span></li>-->
+					</ul><br>
+					<b>Current medications:</b>
+					<ul id="nodeULEx2"class="nodeUL">
+						<!--<li class="nodeLI"><span></span></li>-->
+					</ul><br>
+					<b>Predicted diseases:</b>
+					<ul id="nodeULPred1" class="nodeUL">
+						<!--<li class="nodeLI"><span></span></li>-->
+					</ul><br>
+					<b>Medications to consider:</b>
+					<ul id="nodeULPred2" class="nodeUL">
+						<!--<li class="nodeLI"><span></span></li>-->
+					</ul>
+				</div>
+				<div><small>Search: <input type="text" id="searchNodeLabel" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchNodeLabel" value=".d." /></small></div>
+			</div>
+			<div class="adderBottom"><input type="button" class="button3" id="legend" value="EXPLAIN" /></div>
+			<div class="adderBottomLeft button3"><input type="checkbox" id="shownodeoverview" value="Show" />SHOW LABELS</div>
+		</div>
+		
+	<div class="adder"><input type="button" class="button3" id="configure" value="CONFIGURE" /> <input type="button" class="button3" id="resetView" value="RESET VIEW" /></div>
+
 	<div id="configurator" class="container_item selector modeselector">
+		<div class="adder"><input type="button" class="button3" id="configuratorX" value="X" /></div>
+		<b>Configure calculation & loading</b><br>
 		<form id="view_form">
-		View format: <label><input type="radio" name="view" value="GRAPH"> Graph view</label>
-		  <label><input type="radio" name="view" value="LIST" checked> List view</label>
-		 </form><p>
-		<form id="mode_form">
-		  Score base: <label><input type="radio" name="mode" value="ABS" checked> Absolute risk score</label>
-		  <label><input type="radio" name="mode" value="REL"> Relative risk factor</label>
-		</form>
+		<table>
+		<td>Top risks to calculate: </td>
+		<td><label><input type="radio" name="topX" value="5"> 5</label> <label><input type="radio" name="topX" value="10" checked> 10</label> <label><input type="radio" name="topX" value="20"> 20</label> <label><input type="radio" name="topX" value="50"> 50</label></td>
+		</tr></table>
+		 </form>
+		<hr>
+		<b>Configure view</b><br>
+		<table>
+		<tr>
+			  <td>Score base: </td>
+			  <td><form id="mode_form"><label><input type="radio" name="mode" value="ABS" checked> Absolute risk score</label>
+			  <label><input type="radio" name="mode" value="REL"> Relative risk factor</label></form></td>
+		</tr>
+		</table>
+		<form id="config_form">
+		<table>
+		<tr>
+			<td>Search node label: </td>
+			<td><input type="text" id="searchNode" class="searchBox" /><img class="button4" type="image" src="img/delete.png" id="clearSearchNode" value=".d." /></td>
+		</tr><tr>
+			<td>Node types to show: </td>
+			<td><label><input type="checkbox" name="nodetypes" value="DIS" checked> Diseases</label> <label><input type="checkbox" name="nodetypes" value="MED" checked> Medications</label></td>
+		</tr>
+		<tr>
+			<td><label for="threshold">Show risks above: </label></td>
+			<td><div class="container_row"><div style="width: 80px;"><input type="text" id="threshold" readonly style="border:0; color:rgb(255, 130, 0);" size="7"></div><div style="width: 150px;" id="thresholdslider"></div></div></td>
+		</tr><tr>
+			<td><label for="prevalence">Prevalence: </label></td>
+			<td><div class="container_row"><div style="width: 80px;"><input type="text" id="prevalence" readonly style="border:0; color:rgb(255, 130, 0);" size="7"></div><div style="width: 150px;" id="prevslider"></div></div></td>
+		</tr>
+		</table>
+		</form>		
 	</div>
-<!--<svg class="chart"></svg>-->
-<div id="charts" class="charts">
-<div class="chart_list">Future diseases, incident <svg class="chart" id="chart_left"></svg></div>
-<div class="chart_list">Medications to consider <svg class="chart" id="chart_right"></svg></div>
-</div>
-<div id="chart_graph" class="hidden" ><svg class="chart" id="thegraph"></svg></div>
+	
+	<div id="thelegend" class="container_item selector modeselector">
+	<div class="adder"><input type="button" class="button3" id="thelegendX" value="X" /></div>
+	<b>The graph view:</b>
+		<ul>
+		<li style="color: red;">Lightred: Existing diseases</li>
+		<li style="color: darkred;">Red: Future diseases</li>
+		<li style="color: blue;">Lightblue: Current medications</li>
+		<li style="color: darkblue;">Blue: Medications to consider</li>
+		<li style="color: red; opacity:0.5;">Red arrows: increase risk <small style="color:black;">(the darker the bigger the odds)</small></li>
+		<li style="color: green; opacity:0.5;">Green arrows: lower risk <small style="color:black;">(the darker the bigger the odds)</small></li>
+		</ul>
+	<b>Actions:</b>
+		<ul>
+		<li>click a node to focus</li>
+		<li>ctrl + click a node to hide</li>
+		<li>double click to visit Clinical Key content</li>
+	</ul>
+		
+	</div>
+	
 </div>
 </section>
 <div id="tooltip" class="hidden">
   <p><strong id="t_heading"></strong></p>
+  <p><span id="t_type"></span></p>
+  <p><span id="t_cluster"></span></p>
   <p><span id="t_absrisk"></span></p>
   <p><span id="t_relrisk"></span></p>
   <p><span id="t_prev"></span></p>
@@ -135,11 +232,23 @@
    <p><span id="t_link"></span></p>
 </div>
 
+
 <script src="js/precmedicine.js"></script>
 
 <script>
 document.getElementById("link_en").setAttribute("href",ehealthurl+"index.html");
 	document.getElementById("link_de").setAttribute("href",ehealthurl+"index_de.html");
 	document.getElementById("link_graph").setAttribute("href",graphhurl);
+</script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-77189643-1', 'auto');
+  ga('send', 'pageview');
+
 </script>
 </body>

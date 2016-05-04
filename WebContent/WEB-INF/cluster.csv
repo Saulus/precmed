@@ -1,9 +1,8 @@
 Cluster;Deutsch;Englisch;Comment
-1;Leichte Erkrankungen / Kinder und Jugendliche;Children;angeborene Störungen, akute Verletzungen und Vergiftungen, entzündliche Hauterkrankungen, Allergien, akute Infektionen, Karies
-2;Junge Erwachsene 1 ;Young Adults 1;Reisekrankheiten und Parasiten, HIV, Schwangerschaft und Geburt
-3;Schwerwiegende Erkrankungen 1;Severe Disease 1;Malignomcluster 1, andere schwerwiegende Erkrankungen
-4;Zivilisationskrankheiten / alte Menschen;Chronic Disease;Chronische Erkrankungen, Anämien, Demenz Perostatahyperplasie, Inkontinenz etc. 
-5;Psychiatrische Erkrankungen / mittleres Lebensalter;Psychiatric Disease;Sucht, Depression etc., Rückenschmerz, Knochen-und Weichteiolerkrankungen
-6;Schwerwiegende Erkrankungen 2;Severe Disease 2;Malignomcluster 2, andere schwerwiegende Erkrankungen
-7;Junge Erwachsene 2;Young Adults 2;endokrine Störungen, akute Erkrankungen, Gyn, Schwangerschaft und Geburt
-;Andere;Other
+;Andere Erkrankungen;Other Diseases;
+0;Kinder;Children;
+1;Chronische Erkrankungen;Chronic diseases;
+2;Ernste Erkrankungen;Severe Diseases;
+3;Psychiatrische und Orthopädische Erkrankungen;Psychiatric and orthopedic diseases;
+4;Erwachsene;Adults;
+5;Frauen, Geburt und Neugeborene;Womens diseases, gravidity, birth and Newborn;

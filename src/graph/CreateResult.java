@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gson.Gson;
 
+import configuration.Consts;
 import lists.AList;
 
 
@@ -44,6 +43,7 @@ public class CreateResult {
 		public String typelabel;
 		public boolean isnew = true;
 		public boolean istarget = true;
+		public int topX = 0;
 		
 		public ResultSet() {	
 		}
@@ -76,41 +76,28 @@ public class CreateResult {
 	    }
 	}
 	
-	class TreeNode {
-		public String key;
-		public String label;
-		public ArrayList<Object> children;
-		
-		public TreeNode(String key, String label) {
-			this.key=key;
-			this.label=label;
-			this.children=new ArrayList<Object>(); 
-		}
-		
-		public TreeNode(String key, String label, ArrayList<Object> list) {
-			this.key=key;
-			this.label=label;
-			this.children=list;
-		}
-		
-		public void add(Object a) {
-			children.add(a);
-		}
-		
-		public ArrayList<Object> getChildren () {
-			return children;
-		}
-		
-	}
-
 	
 	class LinkResult {
-		public String source;
-		public String target;
-		public Double odds;
-		public Double oddsScaled;
+		public int source;
+		public int target;
+		public double odds;
+		public double oddstransformed;
+		public double pvalue;
+		public double incidence;
+		public double mean_age;
 		public String typekey="";
 		public String typelabel;
+		
+		public LinkResult() {	
+		}
+		
+		public void roundMe () {
+			odds = (double) Math.round(odds*1000)/1000;
+			oddstransformed = (double) Math.round(oddstransformed*1000)/1000;
+			if (pvalue != 0) pvalue = (double) Math.round(pvalue*1000)/1000;
+			if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
+			if (mean_age != 0) mean_age = (double) Math.round(mean_age*10)/10;
+		}
 	}
 	
 	
@@ -144,9 +131,13 @@ public class CreateResult {
 		Collections.sort(atcresults_relative, new RelComp());
 		
 		icdresults =  icdresults.subList(0, topX);
+			for (int i=0; i<icdresults.size(); i++) icdresults.get(i).topX=i;
 		icdresults_relative = icdresults_relative.subList(0, topX);
+			for (int i=0; i<icdresults_relative.size(); i++) icdresults_relative.get(i).topX=i;
 		atcresults = atcresults.subList(0, topX);
+			for (int i=0; i<atcresults.size(); i++) atcresults.get(i).topX=i;
 		atcresults_relative = atcresults_relative.subList(0, topX);
+			for (int i=0; i<atcresults_relative.size(); i++) atcresults_relative.get(i).topX=i;
 	}
 	
 	
@@ -156,6 +147,7 @@ public class CreateResult {
 		result.prevalence=graph.getPrevalence(key);
 		result.incidence=graph.getIncidence(key);
 		result.mean_age=graph.getMeanAgeIncidence(key);
+		result.istarget=istarget;
 		if (istarget) {
 			result.risk=graph.getRisk(key, features);
 			result.rrisk=result.risk/result.incidence;
@@ -180,15 +172,36 @@ public class CreateResult {
 			if (english) 
 				result.typelabel="Medication";
 			else result.typelabel="Medikamentation";
+		} else if (key.equals(Consts.alterattribute)) {
+			if (english) result.label="Age"; 
+			else result.label="Alter";
+			result.typekey="GEN";
+			result.typelabel="General";
+		} else if (key.equals(Consts.geschlechtattribute)) {
+			if (english) result.label="Gender, i.e. effects of being male";
+			else result.label="Geschlecht, Effekte des Attributes männlich";
+			result.typekey="GEN";
+			result.typelabel="General";
+		} else if (key.equals(Consts.numberICDattribute)) {
+			if (english) result.label="Count of unique diseases (ICD)";
+			else result.label="Anzahl einzelner Krankheiten (ICD)";
+			result.typekey="GEN";
+			result.typelabel="General";
+		} else if (key.equals(Consts.numberATCattribute)) {
+			if (english) result.label="Count of unique substances (ATC)";
+			else result.label="Anzahl einzelner Medikamente (ATC)";
+			result.typekey="GEN";
+			result.typelabel="General";
 		}
-		result.clusterlabel=clusterlist.getName(result.clusterkey, english);
+		
+		result.clusterlabel=clusterlist.getName(result.clusterkey, english) + "*";
 		
 		return result;
 	}
 
 	
-	public String graphJson(Gson gson, boolean english, Graphdata graph, HashMap<String,Double> features) {
-		TreeNode newresult = new TreeNode("ROOT","Graph");
+	public TreeNode graphNode(boolean english, Graphdata graph, HashMap<String,Double> features) {
+		TreeNode newresult = new TreeNode("GRAPH","Graph");
 		TreeNode rel = new TreeNode("REL","Relative");
 		newresult.add(rel);
 		TreeNode abs = new TreeNode("ABS","Absolute");
@@ -220,12 +233,16 @@ public class CreateResult {
 				String target = ((ResultSet) r2).key;
 				if (graph.hasEdge(source, target)) {
 					link = new LinkResult();
-					link.source=source;
-					link.target=target;
+					link.source=abs_nodes.getChildId(r1);
+					link.target=abs_nodes.getChildId(r2);
 					link.odds=graph.getOdds(source, target);
-					link.oddsScaled=graph.getOddsScaled(source, target);
+					link.oddstransformed=graph.getOddsTransformed(source, target);
+					link.incidence=graph.getIncidenceConditionSource(source, target);
+					link.mean_age=graph.getMeanAgeIncidenceConditionSource(source, target);
+					link.pvalue=graph.getPvalue(source, target);
 					link.typekey="ODDS";
-					link.typekey="Odds";
+					link.typelabel="Odds";
+					link.roundMe();
 					abs_links.add(link);
 				}
 			}
@@ -237,23 +254,27 @@ public class CreateResult {
 				String target = ((ResultSet) r2).key;
 				if (graph.hasEdge(source, target)) {
 					link = new LinkResult();
-					link.source=source;
-					link.target=target;
+					link.source=rel_nodes.getChildId(r1);
+					link.target=rel_nodes.getChildId(r2);
 					link.odds=graph.getOdds(source, target);
-					link.oddsScaled=graph.getOddsScaled(source, target);
+					link.oddstransformed=graph.getOddsTransformed(source, target);
+					link.incidence=graph.getIncidenceConditionSource(source, target);
+					link.mean_age=graph.getMeanAgeIncidenceConditionSource(source, target);
+					link.pvalue=graph.getPvalue(source, target);
 					link.typekey="ODDS";
-					link.typekey="Odds";
+					link.typelabel="Odds";
+					link.roundMe();
 					rel_links.add(link);
 				}
 			}
 		}
 		
-		return gson.toJson(newresult);
+		return newresult;
 	}
 	
-	public String riskJson(Gson gson, boolean english) {
+	public TreeNode riskNode(boolean english) {
 		//create Node structure
-		TreeNode newresult = new TreeNode("ROOT","Risks");
+		TreeNode newresult = new TreeNode("LIST","List");
 		TreeNode rel;
 		TreeNode abs;
 		TreeNode rel_sec1;
@@ -289,7 +310,7 @@ public class CreateResult {
 		nodesToCluster(rel_sec2,atcresults_relative,english);
 		nodesToCluster(abs_sec1,icdresults,english);
 		nodesToCluster(abs_sec2,atcresults,english);
-		return gson.toJson(newresult);
+		return newresult;
 	}
 	
 	private void nodesToCluster (TreeNode root, List<ResultSet> resultlist, boolean engl) {

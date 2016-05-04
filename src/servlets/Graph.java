@@ -3,6 +3,7 @@ package servlets;
 import configuration.*;
 import graph.CreateResult;
 import graph.Graphdata;
+import graph.TreeNode;
 import lists.AList;
 
 import java.io.IOException;
@@ -19,8 +20,10 @@ import com.google.gson.Gson;
 
 
 class RequestSet {
-	public String ALTER;
-	public String GESCHLECHT;
+	public String AGE;
+	public String GENDER;
+	public String COUNT_ATC;
+	public String COUNT_ICD;
 	public String[] ICD;
 	public String[] ATC;
 	
@@ -142,7 +145,7 @@ public class Graph extends HttpServlet {
 					boolean english=true;
 					//int version=1;
 					int topX = Consts.topX;
-					boolean graphview = false;
+					//boolean graphview = false;
 					
 					if ("POST".equalsIgnoreCase(request.getMethod())) {
 						jsonString = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
@@ -159,9 +162,9 @@ public class Graph extends HttpServlet {
 						}*/
 						
 						//view; //GRAPH or RISKS
-						if (myrequest.view != null && myrequest.view.equals("GRAPH")) {
-							graphview=true;
-						}
+						//if (myrequest.view != null && myrequest.view.equals("GRAPH")) {
+						//	graphview=true;
+						//}
 						
 						//topX
 						if (myrequest.topX != null) {
@@ -170,11 +173,15 @@ public class Graph extends HttpServlet {
 						
 						//BUild features
 							//Alter
-							if (myrequest.ALTER != null)
-								features.put(Consts.alterattribute, parseFeature(myrequest.ALTER));
+							if (myrequest.AGE != null)
+								features.put(Consts.alterattribute, parseFeature(myrequest.AGE));
 							//geschlecht
-							if (myrequest.GESCHLECHT != null)
-								features.put(Consts.geschlechtattribute, parseFeature(myrequest.GESCHLECHT));
+							if (myrequest.GENDER != null)
+								features.put(Consts.geschlechtattribute, parseFeature(myrequest.GENDER)-1); //Geschlecht is 0/1 coded, not 1/2
+							if (myrequest.COUNT_ATC != null)
+								features.put(Consts.numberATCattribute, parseFeature(myrequest.COUNT_ATC));
+							if (myrequest.COUNT_ICD != null)
+								features.put(Consts.numberICDattribute, parseFeature(myrequest.COUNT_ICD));
 							//atc
 							for (int i=0; i<myrequest.ATC.length; i++) {
 								features.put(myrequest.ATC[i],1.);
@@ -189,10 +196,10 @@ public class Graph extends HttpServlet {
 					CreateResult res = new CreateResult(topX,icdlist,atclist,clusterlist);
 					res.calc(graph, features,english);
 					
-					String myresponse;
-					if (graphview) 
-						myresponse = res.graphJson(gson, english,graph, features);
-					else myresponse = res.riskJson(gson, english);
+					TreeNode result = new TreeNode("ROOT","Risks");
+					result.add(res.graphNode(english, graph, features));
+					result.add(res.riskNode(english));
+					String myresponse=gson.toJson(result);
 					
 					response.getWriter().append(myresponse);
 				}
