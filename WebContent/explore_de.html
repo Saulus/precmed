@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<header>
+<meta charset="utf-8">
+
+<title>Elsevier Medical Graph v0.3</title>
+<style>
+
+@import url(index.css);
+
+
+</style>
+<script src="js/d3.min.js"></script>
+<script src="js/jquery-2.1.4.min.js"></script>
+<!--<script src="js/colorbrewer.js"></script>-->
+<script src="js/jquery-ui/jquery-ui.min.js"></script>
+<script src="js/init.js"></script>
+<!--<link rel="stylesheet" href="js/jquery-ui/jquery-ui.min.css">-->
+<link rel="stylesheet" href="js/jquery-ui/themes/_precisionmedicine/jquery-ui.css">
+<script>
+	var mode="EXPLORE";
+	var lang="DE"; //DE
+</script>
+</header>
+<body>
+
+<img id="theImg" src="img/page-loader.gif" visibility="hidden" />
+
+<section id="global">
+<div class="mainpart">
+	<div class="container_row">
+			<div class = "container_row">
+			<div style="margin: auto;font-size: 0.6em; text-align: center;"><img width=20 height=20 src="img/doctor.png" align="top"/> <img width=20 height=20 src="img/pills.png" align="top"/>
+			</div>
+			<div style="margin: auto;font-size: 0.9em;line-height: 90%; text-align: left;">Explore diagnosis / medication: </div>
+			<div style="margin: auto;font-size: 0.9em; text-align: center;"><input type="text" id="startEXPLORE" class="searchBox" style="width: 400px;"/><input class="button4" type="image" src="img/delete.png" id="clearEXPLORE" value=".d." /></div>
+			</div>
+			
+			<div style="margin: auto;font-size: 0.6em; text-align: center;"><input type="image" class="button2" src="img/delete.png" id="reset" value="Reset" />
+			<br>Reset all
+			</div>
+	</div>
+	<div id="EXPLOREselector" class="container_item selector">
+		<div class="adder"><input type="button" class="button3" id="EXPLOREselectorX" value="X" /></div>
+		<select id="optionsEXPLORE" class="valueList selectorlist" size="12" multiple></select><br>
+		<select id="optionsEXPLOREhidden" hidden=True></select><br>
+	</div>
+	<div id="en_de"><a id="link_en">EN</a> | <a id="link_de">DE</a><br><a id="link_precmed" target="precmed"><img src="img/precision_small.png" width=24 height=24 align="top"><small> Patient view</small></a></div>
+</div>
+<div class="abstand_ver"> </div>
+<div class="superheading">The Elsevier Medical Graph [DE Version]</div>
+<div class="mainpart">
+		<div id="GRAPH" class="explore"><svg class="chart explore" id="thegraph"></svg>
+			<div id="nodeoverview" class="explore">
+				<div class="adder"><input type="button" class="button3" id="nodeoverviewX" value="X" /></div>
+				<div style="overflow: auto; height:720px;">
+					<b>Diseases:</b>
+					<ul id="nodeULEx1"class="nodeUL">
+						<!--<li class="nodeLI"><span></span></li>-->
+					</ul><br>
+					<b>Medications:</b>
+					<ul id="nodeULEx2"class="nodeUL">
+						<!--<li class="nodeLI"><span></span></li>-->
+					</ul>
+				</div>
+				<div><small>Search: <input type="text" id="searchNodeLabel" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchNodeLabel" value=".d." /></small></div>
+			</div>
+			<div class="adderBottom"><input type="button" class="button3" id="legend" value="EXPLAIN" /></div>
+			<div class="adderBottomLeft button3"><input type="checkbox" id="shownodeoverview" value="Show" />SHOW LABELS</div>
+		</div>
+		
+	<div class="adder"><input type="button" class="button3" id="configure" value="CONFIGURE" /> <input type="button" class="button3" id="resetView" value="RESET VIEW" /></div>
+
+	<div id="configurator" class="container_item selector modeselector">
+		<div class="adder"><input type="button" class="button3" id="configuratorX" value="X" /></div>
+		<b>Configure view</b><br>
+		<table>
+		<tr>
+			  <td>Score base: </td>
+			  <td><form id="mode_form"><label><input type="radio" name="mode" value="ABS" checked> Absolute risk score</label>
+			  <label><input type="radio" name="mode" value="REL"> Relative risk factor</label></form></td>
+		</tr>
+		</table>
+		<form id="config_form">
+		<table>
+		<tr>
+			<td>Search node label: </td>
+			<td><input type="text" id="searchNode" class="searchBox" /><img class="button4" type="image" src="img/delete.png" id="clearSearchNode" value=".d." /></td>
+		</tr><tr>
+			<td>Node types to show: </td>
+			<td><label><input type="checkbox" name="nodetypes" value="DIS" checked> Diseases</label> <label><input type="checkbox" name="nodetypes" value="MED" checked> Medications</label></td>
+		</tr>
+		<tr>
+			
+		</tr><tr>
+			<td><label for="prevalence">Prevalence: </label></td>
+			<td><div class="container_row"><div style="width: 80px;"><input type="text" id="prevalence" readonly style="border:0; color:rgb(255, 130, 0);" size="7"></div><div style="width: 150px;" id="prevslider"></div></div></td>
+		</tr>
+		</table>
+		</form>		
+	</div>
+	
+	<div id="thelegend" class="container_item selector modeselector">
+	<div class="adder"><input type="button" class="button3" id="thelegendX" value="X" /></div>
+	<b>The graph view:</b>
+		<ul>
+		<li style="color: red;">Lightred: Existing diseases</li>
+		<li style="color: darkred;">Red: Future diseases</li>
+		<li style="color: blue;">Lightblue: Current medications</li>
+		<li style="color: darkblue;">Blue: Medications to consider</li>
+		<li style="color: red; opacity:0.5;">Red arrows: increase risk <small style="color:black;">(the darker the bigger the odds)</small></li>
+		<li style="color: green; opacity:0.5;">Green arrows: lower risk <small style="color:black;">(the darker the bigger the odds)</small></li>
+		</ul>
+	<b>Actions:</b>
+		<ul>
+		<li>click a node to focus</li>
+		<li>ctrl + click a node to hide</li>
+		<li>double click to visit Clinical Key content</li>
+	</ul>
+		
+	</div>
+	
+</div>
+</section>
+<div id="tooltip" class="hidden">
+  <p><strong id="t_heading"></strong></p>
+  <table>
+  <tr id="t_type"></tr>
+  <tr id="t_cluster"></tr>
+  <tr id="t_absrisk"></tr>
+  <tr id="t_relrisk"></tr>
+  <tr id="t_prev"></tr>
+  <tr id="t_inc"></tr>
+  <tr id="t_mean_age"></tr>
+   <tr id="t_link"></tr>
+   </table>
+</div>
+
+
+<script src="js/precmedicine.js"></script>
+
+<script>
+document.getElementById("link_en").setAttribute("href",ehealthurl+"explore.html");
+	document.getElementById("link_de").setAttribute("href",ehealthurl+"explore_de.html");
+	document.getElementById("link_precmed").setAttribute("href",ehealthurl);
+</script>
+
+<script>
+
+</script>
+</body>

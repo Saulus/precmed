@@ -29,11 +29,13 @@ public class Lists extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
 
-	public static String icdlistFile = Init.getWebInfPath() + "/"+Consts.icdcsv;
-	public static String atclistFile = Init.getWebInfPath() + "/"+Consts.atccsv;
+	public static String medlistFile = Init.getWebInfPath() + "/"+Consts.medcsv;
+	public static String dislistFile = Init.getWebInfPath() + "/"+Consts.discsv;
+	public static String genlistFile = Init.getWebInfPath() + "/"+Consts.genkeycsv;
 	public static String clusterlistFile = Init.getWebInfPath() + "/"+Consts.clustercsv;
 	
-	public HashMap<String,AList> mylists = new HashMap<String,AList>(); 
+	public HashMap<String,AList> mykeylists = new HashMap<String,AList>(); 
+	private AList clusterlist;
        
     /**
      * @see HttpServlet#HttpServlet()
@@ -42,21 +44,28 @@ public class Lists extends HttpServlet {
         super();
         Gson gson = new Gson();
         try {
-	        mylists.put("ICD",new AList(icdlistFile,new ListTypeKonfigICD(),gson));
+        	mykeylists.put("DIS",new AList(dislistFile,new ListTypeKonfigICD(),gson));
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + icdlistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + dislistFile);
     		e.printStackTrace();
     	}
         
         try {
-        	 mylists.put("ATC",new AList(atclistFile,new ListTypeKonfigATC(),gson));
+        	mykeylists.put("MED",new AList(medlistFile,new ListTypeKonfigATC(),gson));
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + atclistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + medlistFile);
     		e.printStackTrace();
     	}
         
         try {
-        	mylists.put("cluster",new AList(clusterlistFile,new ListTypeKonfigCluster(),gson));
+        	mykeylists.put("GEN",new AList(genlistFile,new ListTypeKonfigOTHER(),gson));
+       } catch (Exception e) {
+   		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + genlistFile);
+   		e.printStackTrace();
+       }
+        
+        try {
+        	clusterlist = new AList(clusterlistFile,new ListTypeKonfigCluster(),gson);
         } catch (Exception e) {
     		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + clusterlistFile);
     		e.printStackTrace();
@@ -79,8 +88,8 @@ public class Lists extends HttpServlet {
 			boolean engl = true;
 			if (lang != null && lang.equals("DE")) engl=false;
 			
-			if (mylists.get(list) != null)
-				response.getWriter().append(mylists.get(list).getJson(engl));
+			if (mykeylists.get(list) != null)
+				response.getWriter().append(mykeylists.get(list).getJson(engl));
 			else 
 				response.getWriter().append("{Unknown}");
 		//}

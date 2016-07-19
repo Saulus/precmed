@@ -36,8 +36,8 @@ public class Demo extends HttpServlet {
 	class Patient {
 		public String AGE;
 		public String GENDER;
-		public ArrayList<String> ICD = new  ArrayList<String>();
-		public ArrayList<String> ATC = new  ArrayList<String>();
+		public ArrayList<String> DIS = new  ArrayList<String>();
+		public ArrayList<String> MED = new  ArrayList<String>();
 		
 		public Patient() {
 			
@@ -122,9 +122,9 @@ public class Demo extends HttpServlet {
 						else if (headerline[i].startsWith(Consts.geschlechtattributeOrig))
 							mylist.get(pid_s).GENDER = nextline[i].substring(0, 1);
 						else if (headerline[i].length()==3)
-							mylist.get(pid_s).ICD.add(headerline[i]);
+							mylist.get(pid_s).DIS.add(headerline[i]);
 						else if (headerline[i].length()==5)
-							mylist.get(pid_s).ATC.add(headerline[i]);
+							mylist.get(pid_s).MED.add(headerline[i]);
 					}
 				}
 				pid++;

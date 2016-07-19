@@ -117,17 +117,17 @@ class Worker {
 	  }
 	  
 	  private boolean isKnr (String key, boolean isTarget) {
-		  String praefix = Consts.knrattributePrefix;
-		  if (isTarget) praefix = Consts.knrTargetPrefix;
+		  /*String praefix = Consts..knrattributePrefix;
+		  if (isTarget) praefix = Consts.knrTargetPrefix;*/
 		  boolean isNumber = true;
-		  try {
+		  /*try {
 			  if (!key.equals("ALTER") && !key.equals("GESCHLECHT")) {
 				  @SuppressWarnings("unused")
 				int i = Integer.parseInt(key.substring(praefix.length()));
 			  }
 		  } catch (NumberFormatException e) {
 			  isNumber = false;
-		  }
+		  }*/
 		  return isNumber;  
 	  }
 	  
@@ -175,9 +175,9 @@ class Worker {
 			Integer idcol=null;
 			Integer praevcol=null;
 			for (int j=0; j<headerline.length; j++) {
-				if (headerline[j].trim().toUpperCase().equals(Consts.targetCol)) targetcol=j;
+				/*if (headerline[j].trim().toUpperCase().equals(Consts.targetCol)) targetcol=j;
 				if (headerline[j].trim().toUpperCase().equals(Consts.targetIDCol)) idcol=j;
-				if (headerline[j].trim().toUpperCase().equals(Consts.targetPraevCol)) praevcol=j;
+				if (headerline[j].trim().toUpperCase().equals(Consts.targetPraevCol)) praevcol=j;*/
 			}
 			readIn.remove(0);
 			if (targetcol == null || idcol==null || readIn.size()==0 )

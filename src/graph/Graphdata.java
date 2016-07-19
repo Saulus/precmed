@@ -78,9 +78,10 @@ public class Graphdata {
 				edge.source=nextline[sourceCol].toUpperCase();
 				if (edge.source.equals(Consts.geschlechtattributeOrig)) edge.source=Consts.geschlechtattribute;
 				if (edge.source.equals(Consts.alterattributeOrig)) edge.source=Consts.alterattribute;
-				if (edge.source.equals(Consts.numberATCattributeOrig)) edge.source=Consts.numberATCattribute;
-				if (edge.source.equals(Consts.numberICDattributeOrig)) edge.source=Consts.numberICDattribute;
+				if (edge.source.equals(Consts.numberMEDattributeOrig)) edge.source=Consts.numberMEDattribute;
+				if (edge.source.equals(Consts.numberDISattributeOrig)) edge.source=Consts.numberDISattribute;
 				edge.target=nextline[targetCol].toUpperCase();
+				if (edge.target.equals(Consts.todattributeOrig)) edge.target=Consts.todattribute;
 				try {edge.or=Double.parseDouble(nextline[oddsCol]);} catch (Exception e) {}
 				try {edge.pvalue=Double.parseDouble(nextline[pvalueCol]);} catch (Exception e) {}
 				try {edge.or_transformed=Double.parseDouble(nextline[oddsTransformedCol]);} catch (Exception e) {}
@@ -116,6 +117,23 @@ public class Graphdata {
 	
 	public Set<String> getTargetList() {
 		return this.targetlist.keySet();
+	}
+	
+	public ArrayList<String> getConnectedNodes(String key) {
+		ArrayList<String> nodes = new ArrayList<String>();
+		
+		//add all sources for this target
+		if (targetlist.containsKey(key)) {
+			for (String addKey : this.targetlist.get(key).keySet())
+				if (!addKey.equals(Consts.intercept)) nodes.add(addKey);
+		}
+		//add all targets for this source
+		if (sourcelist.containsKey(key)) {
+			for (String addKey : this.sourcelist.get(key).keySet())
+				if (!addKey.equals(Consts.intercept)) nodes.add(addKey);
+		}
+		if (nodes.size()>0) nodes.add(key);
+		return nodes;
 	}
 	
 		

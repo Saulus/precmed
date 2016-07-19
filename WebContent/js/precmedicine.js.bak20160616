@@ -1,27 +1,27 @@
-// INIT
+<!-- INIT -->
 
 //filter init
 var prevalence_min=0, prevalence_max=15;
 var age_min=0, age_max=99;
 
 var linkDistance=100,
-	friction=0.4,
-	charge=-2000,
+	friction=0.8,
+	charge=-1500,
 	chargeDistance=300,
 	theta=0.9,
-	gravity=0.15;
+	gravity=0.3;
 
 if (mode=="EXPLORE") {
 	linkDistance=100;
-	friction=0.5;
+	friction=0.6;
 	charge=-1000;
 	chargeDistance=300;
 	theta=0.9;
 	gravity=0.2;
 }
 
-var DISlist = [];
-var MEDlist = [];
+var ICDlist = [];
+var ATClist = [];
 
 var graphdata = null;
 var graphnodes = [],
@@ -44,10 +44,10 @@ $.getJSON( ehealthurl+'Demo', function( jsondata ) {
 drawUI();
 reset(); 
 
-// load("MED","#leftValuesMED"); -->
+<!-- load("ATC","#leftValuesATC"); -->
 
 
-// LOADER -->
+<!-- LOADER -->
 function load(loader,form) {
 	var myurlstart=ehealthurl+'Lists'+'?lang='+lang+'&list=';
 	
@@ -55,14 +55,14 @@ function load(loader,form) {
 		myurl = [],
 		intsort=[];
 	
-	if (loader=="DIS" || loader=="ALL") {
-		myvar.push('DISlist');
-		myurl.push(myurlstart+'DIS');
+	if (loader=="ICD" || loader=="ALL") {
+		myvar.push('ICDlist');
+		myurl.push(myurlstart+'ICD');
 		intsort.push(false);
 	}
-	if (loader=="MED" || loader=="ALL") {
-		myvar.push('MEDlist');
-		myurl.push(myurlstart+'MED');
+	if (loader=="ATC" || loader=="ALL") {
+		myvar.push('ATClist');
+		myurl.push(myurlstart+'ATC');
 		intsort.push(false);
 	}
 	
@@ -102,7 +102,7 @@ function getfromurl(url,variable,form,intsort) {
 	});
 }
 
-// UI -->
+<!-- UI -->
 function drawUI() {
 
     $( "#prevslider" ).slider({
@@ -168,34 +168,34 @@ function drawUI() {
 }
   
 
-// ACTIONS -->
+<!-- ACTIONS -->
 
-$("#add_DIS").mouseover(function (e) {
-	$("#DISselector").css('top', e.clientY-15);
-	$("#DISselector").css('left', e.clientX-75);
-	$("#DISselector").show();
+$("#add_ICD").mouseover(function (e) {
+	$("#ICDselector").css('top', e.clientY-15);
+	$("#ICDselector").css('left', e.clientX-75);
+	$("#ICDselector").show();
 });
 
-$("#DISselector").mouseleave(function () {
-	$("#DISselector").hide();
+$("#ICDselector").mouseleave(function () {
+	$("#ICDselector").hide();
 });
 
-$("#DISselectorX").click(function () {
-	$("#DISselector").hide();
+$("#ICDselectorX").click(function () {
+	$("#ICDselector").hide();
 });
 
-$("#add_MED").mouseover(function (e) {
-	$("#MEDselector").css('top', e.clientY -15);
-	$("#MEDselector").css('left', e.clientX-175);
-	$("#MEDselector").show();
+$("#add_ATC").mouseover(function (e) {
+	$("#ATCselector").css('top', e.clientY -15);
+	$("#ATCselector").css('left', e.clientX-175);
+	$("#ATCselector").show();
 });
 
-$("#MEDselector").mouseleave(function () {
-	$("#MEDselector").hide();
+$("#ATCselector").mouseleave(function () {
+	$("#ATCselector").hide();
 });
 
-$("#MEDselectorX").click(function () {
-	$("#MEDselector").hide();
+$("#ATCselectorX").click(function () {
+	$("#ATCselector").hide();
 });
 
 $("#configure").mouseover(function (e) {
@@ -228,51 +228,51 @@ $("#thelegendX").click(function () {
 });
 
 
-$("#searchDIS").on('keyup', function() {
-	search("#optionsDIS",$(this).val(),false);
+$("#searchICD").on('keyup', function() {
+	search("#optionsICD",$(this).val(),false);
 	
 	//hack: de-select if only one value is left to enable new select
-	//if ($("#optionsDIS option:selected").length == 1) $("#optionsDIS option:selected").first().removeAttr("selected");
+	//if ($("#optionsICD option:selected").length == 1) $("#optionsICD option:selected").first().removeAttr("selected");
 });
 
-$("#clearSearchDIS").click(function () {
-	clearsearch("#optionsDIS","#searchDIS","DIS");
+$("#clearSearchICD").click(function () {
+	clearsearch("#optionsICD","#searchICD","ICD");
 });
 
-$("#optionsDIS").change(function () {
-	move("#optionsDIS","#valuesDIS",false);
+$("#optionsICD").change(function () {
+	move("#optionsICD","#valuesICD",false);
 });
 
 
-$("#addDIS").click(function () {
-	move("#optionsDIS","#valuesDIS",false);
+$("#addICD").click(function () {
+	move("#optionsICD","#valuesICD",false);
 });
 
-$("#valuesDIS").change(function () {
-	clearitem("#valuesDIS");
+$("#valuesICD").change(function () {
+	clearitem("#valuesICD");
 });
 
-$("#searchMED").on('keyup', function() {
-	search("#optionsMED",$(this).val(),false);
+$("#searchATC").on('keyup', function() {
+	search("#optionsATC",$(this).val(),false);
 	
 	//hack: de-select if only one value is left to enable new select
-	//if ($("#optionsMED option:selected").length == 1) $("#optionsMED option:selected").first().removeAttr("selected");
+	//if ($("#optionsATC option:selected").length == 1) $("#optionsATC option:selected").first().removeAttr("selected");
 });
 
-$("#clearSearchMED").click(function () {
-	clearsearch("#optionsMED","#searchMED","MED");
+$("#clearSearchATC").click(function () {
+	clearsearch("#optionsATC","#searchATC","ATC");
 });
 
-$("#optionsMED").change(function () {
-	move("#optionsMED","#valuesMED",false);
+$("#optionsATC").change(function () {
+	move("#optionsATC","#valuesATC",false);
 });
 
-$("#addMED").click(function () {
-	move("#optionsMED","#valuesMED",false);
+$("#addATC").click(function () {
+	move("#optionsATC","#valuesATC",false);
 });
 
-$("#valuesMED").change(function () {
-	clearitem("#valuesMED");
+$("#valuesATC").change(function () {
+	clearitem("#valuesATC");
 });
 
 
@@ -295,8 +295,8 @@ $("#demo").change(function () {
 	var myurl=ehealthurl+'Demo'+'?patient='+$("#demo").val();
 	$.getJSON( myurl, function( jsondata ) {
 		$.each(jsondata, function (key, value) {
-			if (key == "DIS") {addListToForm(value,"DISlist","#valuesDIS",false);}
-			else if (key == "MED") {addListToForm(value,"MEDlist","#valuesMED",false);}
+			if (key == "ICD") {addListToForm(value,"ICDlist","#valuesICD",false);}
+			else if (key == "ATC") {addListToForm(value,"ATClist","#valuesATC",false);}
 			else $("#"+key).val(value);
 		});
 		GO();
@@ -311,7 +311,7 @@ $("#reset").click(function () {
 $("#resetView").click(function () {
 	resetFilter();
 	if (mode=="RISKS") {
-		selectNodesAndLinksRiskMode();
+		selectNodesAndLinksRiskMode($('input[name=mode]:checked', '#mode_form').val());
 	} else {
 		//selectNodesAndLinksExploreMode($("#optionsEXPLORE option:selected").first().val());
 		resetHidden();
@@ -326,7 +326,7 @@ $('#view_form input').on('change', function() {
 
 
 $('#mode_form input').on('change', function() {
-   selectNodesAndLinksRiskMode();
+   selectNodesAndLinksRiskMode($('input[name=mode]:checked', '#mode_form').val());
    drawGraphs(); 
 });
 
@@ -442,7 +442,7 @@ function hideNode(d) {
 
 
 
-// GO  -->
+<!-- GO  -->
 function GO() {
 	var postdata = {};
 	postdata.view=$('input[name=view]:checked', '#view_form').val();
@@ -450,20 +450,20 @@ function GO() {
 	postdata.topX=$('input[name=topX]:checked', '#view_form').val();
 	postdata.AGE=$("#AGE").val();
 	postdata.GENDER=$("#GENDER").val();
-	postdata.DIS=[];
-	$("#valuesDIS option").each( function() {
-		postdata.DIS.push($(this).val());
+	postdata.ICD=[];
+	$("#valuesICD option").each( function() {
+		postdata.ICD.push($(this).val());
 	});
-	postdata.COUNT_DIS = postdata.DIS.length;
-	postdata.MED=[];
-	$("#valuesMED option").each( function() {
-		postdata.MED.push($(this).val());
+	postdata.COUNT_ICD = postdata.ICD.length;
+	postdata.ATC=[];
+	$("#valuesATC option").each( function() {
+		postdata.ATC.push($(this).val());
 	});
-	postdata.COUNT_MED = postdata.MED.length;
+	postdata.COUNT_ATC = postdata.ATC.length;
 	refreshGraph(JSON.stringify(postdata));
 }
 
-// Helper Functions -->
+<!-- Helper Functions -->
 
 function addToForm (item,toForm, intsort) {
 	var added = false;
@@ -513,8 +513,8 @@ function addListToForm (addList,globalVarList,form,intsort) {
 }
 function move(from,to,intsort) {
 	var selectedItem = $(from+" option:selected");
-    //$("#rightValues").append(selectedItem);
-    //$("#txtRight").val(selectedItem.text());
+    <!--$("#rightValues").append(selectedItem);-->
+    <!-- $("#txtRight").val(selectedItem.text());-->
     //var targetList =$(to+" option");
 	$(selectedItem).each(function(){
 		var item = $(this);
@@ -526,11 +526,11 @@ function move(from,to,intsort) {
 
 function reset() {
 	if (mode=="RISKS") {
-		$("#valuesDIS").find('option').remove();
-		$("#valuesMED").find('option').remove();
+		$("#valuesICD").find('option').remove();
+		$("#valuesATC").find('option').remove();
 		
-		clearsearch("#optionsDIS","#searchDIS","DIS");
-		clearsearch("#optionsMED","#searchMED","MED");
+		clearsearch("#optionsICD","#searchICD","ICD");
+		clearsearch("#optionsATC","#searchATC","ATC");
 	} else {
 		clearsearch("#optionsEXPLORE","#startEXPLORE","ALL");
 	}
@@ -651,7 +651,7 @@ function clearsearch(searchform,searchinputfield,type) {
 	*/
 }
 
-// Grafik functions -->
+<!-- Grafik functions -->
 
 
 function refreshGraph(parameters) {
@@ -662,7 +662,7 @@ function refreshGraph(parameters) {
 		
 		graphdata=jsondata;
 
-		selectNodesAndLinksRiskMode();
+		selectNodesAndLinksRiskMode($('input[name=mode]:checked', '#mode_form').val());
 		drawGraphs();
 		d3.select('#theImg').style("visibility","hidden");
 	});
@@ -697,23 +697,10 @@ function initNodes(mynodes,key) {
 				if (key != null && mynodes[k].key == key ) mynodes[k].isCurrentlyFocused=true;		
 				mynodes[k].hideNode=false;
 				mynodes[k].fixed = false;
-				//order on screen by cluster -> not working for too many and/or unsorted clusters
-				//mynodes[k].x = Math.cos((mynodes[k].clusterkey+1) / numberClusters * 2 * Math.PI) * 200 + width / 2 + (Math.random()*10);
-				//mynodes[k].y = Math.sin((mynodes[k].clusterkey+1) / numberClusters * 2 * Math.PI) * 200 + height / 2 + (Math.random()*10);
+				mynodes[k].x = Math.cos((mynodes[k].clusterkey+1) / numberClusters * 2 * Math.PI) * 200 + width / 2 + (Math.random()*10);
+				mynodes[k].y = Math.sin((mynodes[k].clusterkey+1) / numberClusters * 2 * Math.PI) * 200 + height / 2 + (Math.random()*10);
 				
-				//order diagonally
-				//mynodes[k].x = width / n * k;
-				//mynodes[k].y = height / n * k;
-				
-				//order by istarget: old left, new right
-				
-				if (mynodes[k].istarget) {
-					mynodes[k].x = width * 0.7;
-					mynodes[k].y = height / n * k;
-				} else {
-					mynodes[k].x = width * 0.3;
-					mynodes[k].y = height / n * k;
-				}
+				//mynodes[k].x = mynodes[k].y = width / n * k;
 				//console.log(mynodes[k].key + " " +mynodes[k].clusterkey + " " + mynodes[k].x + " " + mynodes[k].y);
 			}
 			
@@ -766,25 +753,31 @@ function initLinks(mylinks,mynodes,existingLinks) {
 			}
 }
 
-function selectNodesAndLinksRiskMode() {
+function selectNodesAndLinksRiskMode(type_abs_rel) {
 	if (graphdata==null) { GO(); return; }
 	
 	//LIST or GRAPH
 	for (lg=0; lg< graphdata.children.length; lg++) {
 		if (graphdata.children[lg].key == "LIST") {
 			//find correct subtree
-			listtree = graphdata.children[lg].children;
-			/*for (var i=0; i< graphdata.children[lg].children.length; i++) {
-				if (graphdata.children[lg].children[i].key == "ABS") listtree_abs=graphdata.children[lg].children[i].children;
-				if (graphdata.children[lg].children[i].key == "REL") listtree_rel=graphdata.children[lg].children[i].children;
-			}break;*/
-			
+			listtree = graphdata.children[lg];
+			for (var i=0; i< graphdata.children[lg].children.length; i++) {
+				if (graphdata.children[lg].children[i].key == type_abs_rel) {
+					listtree=graphdata.children[lg].children[i].children;
+					break;
+				}
+			}
 			
 		} else if (graphdata.children[lg].key == "GRAPH") {
 			//find correct subtree
 			for (var i=0; i< graphdata.children[lg].children.length; i++) {
-						if (graphdata.children[lg].children[i].key == "LINKS") graphlinks=graphdata.children[lg].children[i].children;
-						if (graphdata.children[lg].children[i].key == "NODES") graphnodes=graphdata.children[lg].children[i].children;
+				if (graphdata.children[lg].children[i].key == type_abs_rel) {
+					for (var j=0; j< graphdata.children[lg].children[i].children.length; j++) {
+						if (graphdata.children[lg].children[i].children[j].key == "LINKS") graphlinks=graphdata.children[lg].children[i].children[j].children;
+						if (graphdata.children[lg].children[i].children[j].key == "NODES") graphnodes=graphdata.children[lg].children[i].children[j].children;
+					}
+					break;
+				}
 			}	
 			
 			initNodes(graphnodes);
@@ -812,11 +805,7 @@ function selectNodesAndLinksExploreMode(key) {
 	else {
 		for (var i=0; i< newnodes.length; i++) {
 			if ((exnode = doesNodeExist(newnodes[i],graphnodes)) == null) graphnodes.push(newnodes[i]); //new node
-			else {
-				var isfocused = newnodes[i].isCurrentlyFocused;
-				newnodes[i]=exnode; //node exists -> replace to find correct links
-				if (isfocused) newnodes[i].isCurrentlyFocused=true;
-			}
+			else newnodes[i]=exnode; //node exists -> replace to find correct links
 		}
 	}
 	
@@ -853,10 +842,8 @@ function drawGraphs () {
 			//d3.select("#thegraph").selectAll("*").remove();
 			$("#chart_graph").hide();
 			$("#charts").show();
-			drawListGraph("ABS","#chart_left");
-			drawListGraph("REL","#chart_right");
-			//also pre-draw graph 
-			//drawGraph();
+			drawListGraph($('input[name=mode]:checked', '#mode_form').val(),"DIS","#chart_left");
+			drawListGraph($('input[name=mode]:checked', '#mode_form').val(),"MED","#chart_right");
 		} else if (graphdata != null && active == 1) {
 			$("#charts").hide();
 			$("#chart_graph").show();
@@ -888,10 +875,9 @@ function drawGraph() {
 		.theta(theta)
 		.gravity(gravity)
 		.on("tick", tick)
-		.on("end", fixAll)
 		.start();
 	
-	
+
 	// build the arrow.
 	var defs=chart.selectAll("defs");
 	if (defs.length == 0 || defs[0].length==0) chart.append("svg:defs").selectAll("marker")
@@ -987,19 +973,18 @@ function drawGraph() {
 		.text(function(d) { if (lang==("DE")) { 
 				if (d.key=="GENDER") return "Geschlecht";
 				if (d.key=="AGE") return "Alter"; 
-				if (d.key=="COUNT_MED") return "Anzahl MED"; 
-				if (d.key=="COUNT_DIS") return "Anzahl DIS"; 
+				if (d.key=="COUNT_ATC") return "Anzahl ATC"; 
+				if (d.key=="COUNT_ICD") return "Anzahl ICD"; 
 				} return d.key; 
 		});
 	// Exit any old nodes.
     node.exit().remove();
 	
 	// add the curvy lines
+	
 	function tick() {
 		node
 			.attr("transform", function(d) { 
-				d.x = Math.max(d.radius, Math.min(width - d.radius, d.x)); //set boundary
-				d.y = Math.max(d.radius, Math.min(height - d.radius, d.y));
 				return "translate(" + d.x + "," + d.y + ")"; });
 		
 		path.attr("d", function(d) {
@@ -1024,23 +1009,16 @@ function drawGraph() {
 	
 	/*
 	function tick() {
-		path.attr("points", function(d) {
-		  return d.source.x + "," + d.source.y + " " + 
-				 (d.source.x + d.target.x)/2 + "," + (d.source.y + d.target.y)/2 + " " +
-				 d.target.x + "," + d.target.y; });
-			node
-				.attr("transform", function(d) { 
-					return "translate(" + d.x + "," + d.y + ")"; });
+		
+
+	path.attr("points", function(d) {
+      return d.source.x + "," + d.source.y + " " + 
+             (d.source.x + d.target.x)/2 + "," + (d.source.y + d.target.y)/2 + " " +
+             d.target.x + "," + d.target.y; });
+		node
+			.attr("transform", function(d) { 
+				return "translate(" + d.x + "," + d.y + ")"; });
 	}*/
-	
-	function fixAll() {
-		/*
-		//in the end: fix all nodes
-		for (var i=0; i< nodes.length; i++) {
-			nodes[i].fixed = true;
-		}
-		*/
-	}
 
 	fillNodesLabelOverview (nodes);
 	
@@ -1048,7 +1026,7 @@ function drawGraph() {
 
 //color of nodes
 function selectNodesColor(node) {
-	//if (node.typekey=="GEN") return "#aaa";
+	if (node.typekey=="GEN") return "#aaa";
 	
 	//if (!d.istarget) return "#eee";
 	//return color[d.typekey](d.clusterkey);
@@ -1072,7 +1050,7 @@ function fillNodesLabelOverview (nodes) {
 
 
 
-// Filter  -->
+<!-- Filter  -->
 //some configurations before filtervalues + drawgraph are called
 //
 function filterChanger() {
@@ -1128,7 +1106,7 @@ function resetFilter() {
 	$( "#searchNode" ).val("");
 	$( "#searchNodeLabel" ).val("");
 	
-	$('input[name=topX]', '#view_form').filter('[value=5]').prop('checked', true);
+	$('input[name=topX]', '#view_form').filter('[value=10]').prop('checked', true);
 	
 	$( "#thresholdslider" ).slider( "value",0);
 	$( "#threshold" ).val(">= " + $( "#thresholdslider" ).slider( "value")+ "%");
@@ -1167,23 +1145,16 @@ function toBeFilteredOut(node) {
 	return filterout;
 }
 
-function showLink(link,exploreMode,focusedOnly) {
+function showLink(link,focusedOnly) {
+	var isfine=true;
+	if (focusedOnly) return (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
+	
 	var modus= $('input[name=linkdepth]:checked', '#config_form').val();
-	if (exploreMode) {
-		if (focusedOnly && modus != "ALL") 
-			return (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
-		else return true;
-	} else {
-		var isfine = true;
-		if (modus != "ALL") 
-			isfine = (!link.source.istarget && link.target.istarget);
-		if (focusedOnly) 
-			isfine = isfine && (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
-		return isfine ;
+	if (modus != "ALL") {
+		isfine = link.target.isCurrentlyFocused || link.source.isCurrentlyFocused;
+		isfine = isfine || (!link.source.istarget && link.target.istarget);
 	}
-	
-	
-	if (modus == "CONNECTED" && number_focused>=2) { //not used, for explore mode
+	if (modus == "CONNECTED" && number_focused>=2) {
 		isfine = link.target.isCurrentlyFocused && link.source.isCurrentlyFocused;
 	}
 	return isfine;
@@ -1198,7 +1169,7 @@ function filterNodes(){
 	//first: check for selected
     for (var i = 0; i < graphlinks.length ; i++) {
         var link = graphlinks[i];
-        if (showLink(link,mode=="EXPLORE",true)) newLinks.push(link);
+        if (showLink(link,mode=="RISKS")) newLinks.push(link);
     }
     // if none are selected reinstate the whole dataset
     if (newLinks.length == 0) {
@@ -1212,7 +1183,7 @@ function filterNodes(){
 		var targetOK=!toBeFilteredOut(link.target);
 		if (targetOK) addNodeIfNotThere(link.target,newNodes);
 		if (sourceOK) addNodeIfNotThere(link.source,newNodes);
-        if (targetOK && sourceOK && showLink(link,mode=="EXPLORE",false))
+        if (targetOK && sourceOK && showLink(link))
 			newLinks2.push(link);
     }
 	
@@ -1228,8 +1199,8 @@ function filterNodes(){
 }
 
 
-// List-Graph --> 
-function drawListGraph(type_pos,chartid) {
+<!-- List-Graph --> 
+function drawListGraph(type_abs_rel,type_pos,chartid) {
 	
 	var chart=d3.select(chartid);
 	chart.selectAll("g").remove();
@@ -1246,26 +1217,20 @@ function drawListGraph(type_pos,chartid) {
 	    h = $(chartid).height(),
 	    x = d3.scale.linear().range([0, w]),
 	    y = d3.scale.linear().range([0, h]),
-		kx_top_width = 0.15; 
-		kx_middle_width = 0.3; 
-		kx_last_width = 0.55; 
+		kx_child_faktor = 2; //make last child (=risk) x times wider
 		
 	//console.log(subtree);
 	var partition = d3.layout.partition()
-	    .value(function(d) { return type_pos == "ABS" ? d.risk : d.rrisk; })
+	    .value(function(d) { return type_abs_rel == "ABS" ? d.risk : d.rrisk; })
 		.sort(null);
 
 	// d3.json(JSON_FILE, function(root) {
 	  var g = chart.selectAll("g")
 	      .data(partition.nodes(subtree))
 	    .enter().append("svg:g")
-	      .attr("transform", function(d) { 
-				if (d.key==type_pos) return "translate(" + x(d.y) + "," + y(d.x) + ")";
-				if (d.children) return "translate(" + x(kx_top_width) + "," + y(d.x) + ")";
-				return "translate(" + x(kx_top_width + kx_middle_width) + "," + y(d.x) + ")"; })
-				/*return d.children ? 
+	      .attr("transform", function(d) { return d.children ? 
 				"translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"
-				: "translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"; })*/
+				: "translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"; })
 		.on("mousemove", mousemoveTooltipNode)
           .on("mouseout", mouseoutTooltip)
 		  .on("dblclick", click_link);
@@ -1274,35 +1239,24 @@ function drawListGraph(type_pos,chartid) {
 	      ky = h / 1;
 
 	  g.append("svg:rect")
-	      .attr("width", function(d) { 
-				if (d.key==type_pos) return kx * kx_top_width;
-				if (d.children) return kx * kx_middle_width; 
-				return kx * kx_last_width })
-		  /*
-		  return d.children ? 
+	      .attr("width", function(d) { return d.children ? 
 					kx * d.dy / kx_child_faktor :
-					kx * d.dy * kx_child_faktor })*/
+					kx * d.dy * kx_child_faktor })
 	      .attr("height", function(d) { return d.dx * ky; })
 	      .attr("class", function(d) { return d.children ? "parent" : "child"; })
 		  .attr("fill",function(d) { 
 					if (!d.children && (!d.isnew || toBeFilteredOut(d)))  return "#eee";
 					if (d.children) {
-						if (d.key == "DIS" || d.key == "MED" || d.key == "ABS" || d.key == "REL") return "#eee";
-						else if (d.key == "SERIOUS") return color["GEN"](d.key);
-						else return color["DIS"](d.key);
-					} else return color[d.typekey](d.clusterkey);
+						if (d.key == "DIS" || d.key == "MED") return "#eee";
+						else return color[type_pos](d.key);
+					} else return color[type_pos](d.clusterkey);
 				});
 
 	  g.append("svg:text")
 	      .attr("transform", transform)
-	      .attr("width", function(d) { 
-				if (d.key==type_pos) return kx * kx_top_width;
-				if (d.children) return kx * kx_middle_width; 
-				return kx * kx_last_width })
-		  /*return d.children ? 
+	      .attr("width", function(d) { return d.children ? 
 					kx * d.dy / kx_child_faktor :
-					kx * d.dy * kx_child_faktor })*/
-		  .attr("height", function(d) { return d.dx * ky; })
+					kx * d.dy * kx_child_faktor })
 		  .attr("x", ".35em")
 		  .attr("dy", ".1em")
 		  .attr("class", function(d) { return d.children ? "parent" : "child"; })
@@ -1310,7 +1264,7 @@ function drawListGraph(type_pos,chartid) {
 					if (!d.children && !d.isnew) return "#353535";
 				})*/
 	      .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
-	      .text(function(d) { return d.children ?  d.label : type_pos == "ABS" ? d.label + ", Risk: " + d.risk : d.label + ", rel. Risk: " + d.rrisk; })
+	      .text(function(d) { return d.children ?  d.label : type_abs_rel == "ABS" ? d.label + ", Risk: " + d.risk : d.label + ", rel. Risk: " + d.rrisk; })
 		  .call(wrap);
 	 function transform(d) {
 	    return "translate(8," + d.dx * ky / 2 + ")";
@@ -1324,7 +1278,6 @@ function wrap(text) {
   text.each(function() {
     var text = d3.select(this),
 		width = text.attr("width")-5,
-		height = text.attr("height"),
         words = text.text().split(/\s+/).reverse(),
         word,
         line = [],
@@ -1336,13 +1289,11 @@ function wrap(text) {
     while (word = words.pop()) {
       line.push(word);
       tspan.text(line.join(" "));
-      if (tspan.node().getComputedTextLength() > width ) {
+      if (tspan.node().getComputedTextLength() > width) {
         line.pop();
         tspan.text(line.join(" "));
         line = [word];
-		lineNumber++;
-		if (lineHeight * lineNumber * 16 <= (height*0.6)) /* TODO: move last line up; find better way to locate end of height*/
-			tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", lineHeight + dy + "em").text(word);
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", lineHeight + dy + "em").text(word);
       }
     }
   });
@@ -1355,6 +1306,12 @@ function wrap(text) {
 	  }
  //TOOLTIP functions
  	var mousemoveTooltipNode = function(d) {
+	  var xPosition = d3.event.pageX + 5;
+	  var yPosition = d3.event.pageY + 5;
+
+	  d3.select("#tooltip")
+		.style("left", xPosition + "px")
+		.style("top", yPosition + "px");
 	  var mytext="";
 	  if (d.label) mytext=d.label; else mytext=d.key;
 	   if (!d.istarget && !d.children && mode=="RISKS") mytext=mytext + " (existing)";
@@ -1363,8 +1320,7 @@ function wrap(text) {
 
 	  if (d.children) {
 		  d3.select("#tooltip #t_type")
-			.text(null);
-			//.text("* statistical clusters are beta");
+			.text("* statistical clusters are beta");
 			d3.select("#tooltip #t_cluster")
 			.text(null);
 		d3.select("#tooltip #t_absrisk")
@@ -1380,17 +1336,15 @@ function wrap(text) {
 		  d3.select("#tooltip #t_link")
 			.text(null);
 	  } else {
-		  /*d3.select("#tooltip #t_type")
-			.html("<td width=50>Type:</td><td>" +  d.typelabel+"</td>");*/
-			d3.select("#tooltip #t_type")
-			.text(null);
+		  d3.select("#tooltip #t_type")
+			.text("Type: " +  d.typelabel);
 			d3.select("#tooltip #t_cluster")
-			.html("<td width=80>Group:</td><td>" +  d.clusterlabel+"</td>");
+			.text("Cluster: " +  d.clusterlabel + " (beta)");
 			if (mode=="RISKS") {
 			  d3.select("#tooltip #t_absrisk")
-				.html("<td>Abs. Risk:</td><td>" +round(d.risk * 100,1) + "%"+"</td>");
+				.text("Abs. Risk: " +d.risk);
 			  d3.select("#tooltip #t_relrisk")
-				.html("<td>Rel. Risk:</td><td>" + d.rrisk+"</td>");
+				.text("Rel. Risk: " + d.rrisk);
 			}
 			else { 
 				d3.select("#tooltip #t_absrisk")
@@ -1399,72 +1353,43 @@ function wrap(text) {
 				.text(null);
 			}
 		  d3.select("#tooltip #t_prev")
-			.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
-			if (d.typekey == "DIS") {
-			  d3.select("#tooltip #t_inc")
-				.html("<td>Incidence:</td><td>" + round(d.incidence * 100,1)+ "%"+"</td>");
-			  d3.select("#tooltip #t_mean_age")
-				.html("<td>Mean Age of incidents:</td><td>" + d.mean_age+"</td>");
-			  d3.select("#tooltip #t_link")
-				.html("<td colspan=2>Double-click for ClinicalKey Content</td>");
-			} else {
-				d3.select("#tooltip #t_inc")
-				.text(null);
-				d3.select("#tooltip #t_mean_age")
-				.text(null);
-				d3.select("#tooltip #t_link")
-				.text(null);
-			}
+			.text("Prevalence: " + d.prevalence);
+		  d3.select("#tooltip #t_inc")
+			.text("Incidence: " + d.incidence);
+		  d3.select("#tooltip #t_mean_age")
+			.text("Mean Age of incidents: " + d.mean_age);
+		  d3.select("#tooltip #t_link")
+			.text("Double-click for ClinicalKey Content");
 	 }
-	 
-	  var xPosition = d3.event.clientX + 5;
-	  var yPosition = d3.event.clientY + 5;
-	  
-	  var xMax = window.innerWidth, //document.documentElement.clientWidth,
-	  yMax=window.innerHeight; // document.documentElement.clientHeight;
-
-	  if (xPosition + $("#tooltip").width() > xMax ) xPosition=xMax -$("#tooltip").width()+15;
-	  if (yPosition + $("#tooltip").height() > yMax) yPosition=yMax-$("#tooltip").height()-15;
+		  d3.select("#tooltip").classed("hidden", false);
+	};
+	
+	var mousemoveTooltipLink = function(d) {
+	  var xPosition = d3.event.pageX + 5;
+	  var yPosition = d3.event.pageY + 5;
 
 	  d3.select("#tooltip")
 		.style("left", xPosition + "px")
 		.style("top", yPosition + "px");
-	  d3.select("#tooltip").classed("hidden", false);
-		
-	};
-	
-	var mousemoveTooltipLink = function(d) {
 	  d3.select("#tooltip #t_heading")
 			.text(d.source.key + " to " + d.target.key);
 	  d3.select("#tooltip #t_type")
-			.html("<td width=80>Type:</td><td>" +  d.typelabel+"</td>");
+			.text("Type: " +  d.typelabel);
 		d3.select("#tooltip #t_cluster")
 			.text(null);
 		d3.select("#tooltip #t_absrisk")
-			.html("<td>Odds Ratio:</td><td>" + d.odds+"</td>");
+			.text("Odds Ratio: " + d.odds);
 		  d3.select("#tooltip #t_relrisk")
 			.text(null);
 		  d3.select("#tooltip #t_prev")
 			.text(null);
 		 d3.select("#tooltip #t_inc")
-			.html("<td>Incidence:</td><td>" + round(d.incidence* 100,2)+"%"+"</td>");
+			.text("Incidence: " + d.incidence);
 		  d3.select("#tooltip #t_mean_age")
-			.html("<td>Mean Age:</td><td>" + d.mean_age+"</td>");
+			.text("Mean Age: " + d.mean_age);
 		  d3.select("#tooltip #t_link")
 			.text(null);
 			
-		var xPosition = d3.event.clientX + 5;
-	  var yPosition = d3.event.clientY + 5;
-	  
-	  var xMax = window.innerWidth, //document.documentElement.clientWidth,
-	  yMax=window.innerHeight; // document.documentElement.clientHeight;
-
-	  if (xPosition + $("#tooltip").width() > xMax ) xPosition=xMax -$("#tooltip").width()+15;
-	  if (yPosition + $("#tooltip").height() > yMax) yPosition=yMax-$("#tooltip").height()-15;
-
-	  d3.select("#tooltip")
-		.style("left", xPosition + "px")
-		.style("top", yPosition + "px");
 		 d3.select("#tooltip").classed("hidden", false);
 	};
 
@@ -1497,16 +1422,4 @@ function sortArray(array, intsort) {
 	}
 
 	 return result;
-}
-
-function round(value, decimals) {
-	var result = 1,
-		runs =0;
-	do {
-		result = Number(Math.round(value+'e'+decimals)+'e-'+decimals);
-		decimals++;
-		runs++;
-	} while (result==0 && runs<6);
-	
-    return result;
 }

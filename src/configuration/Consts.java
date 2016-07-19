@@ -6,10 +6,11 @@ Collected constants of general utility.
 **/
 public final class Consts {
 	
-	public static final String version = "1.0";
+	public static final String version = "1.1";
 	
-	public static final String atccsv= "atc5.csv";
-	public static final String icdcsv= "icd3.csv";
+	public static final String medcsv= "atc5.csv";
+	public static final String discsv= "icd3.csv";
+	public static final String genkeycsv= "genkeys.csv";
 	public static final String clustercsv= "cluster.csv";
 
 	public static final String graphcsv= "graphdata.csv";
@@ -18,10 +19,12 @@ public final class Consts {
 	public static final String alterattribute="AGE";
 	public static final String geschlechtattributeOrig="GESCHLECHT";
 	public static final String geschlechtattribute="GENDER";
-	public static final String numberATCattributeOrig="NUMBER_UNIQUE_ATC";
-	public static final String numberATCattribute="COUNT_ATC";
-	public static final String numberICDattributeOrig="NUMBER_UNIQUE_ICD";
-	public static final String numberICDattribute="COUNT_ICD";
+	public static final String numberMEDattributeOrig="NUMBER_UNIQUE_ATC";
+	public static final String numberMEDattribute="COUNT_MED";
+	public static final String numberDISattributeOrig="NUMBER_UNIQUE_ICD";
+	public static final String numberDISattribute="COUNT_DIS";
+	public static final String todattributeOrig="TOD";
+	public static final String todattribute="DEATH";
 	public static final String intercept="(INTERCEPT)";
 	//public static final String atcattribute="ATC";
 	//public static final String icdattribute="ICD";

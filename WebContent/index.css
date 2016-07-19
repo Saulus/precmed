@@ -1,5 +1,6 @@
 html, body {
 background-color: #eee;
+font-size: 16px;
 }
 
 #global {
@@ -376,19 +377,35 @@ margin: auto;
 #GRAPH {
 padding:0;
 margin: auto;
-	width: 1050px;
-	height: 530px; 
 	font-size: 1.2em;
 }
 
-#thegraph {
-	height: 530px; 
-	position: relative;
+#GRAPH.risks {
 	width: 1050px;
+	height: 530px; 
+}
+
+#GRAPH.explore {
+	width: 1050px;
+	height: 890px; 
+}
+
+#thegraph {
+	position: relative;
   display: block;
   margin: auto;
   font-size: 12px;
   text-align:left;
+}
+
+#thegraph.risks {
+	height: 530px; 
+	width: 1050px;
+}
+
+#thegraph.explore {
+	width: 1050px; 
+	height: 890px; 
 }
 
 .hidden {
@@ -411,7 +428,7 @@ text.child {
 rect {
   stroke: #eee;
   #fill: darkred;
-  fill-opacity: .9;
+  fill-opacity: 0.6;
 }
 
 rect.child {
@@ -423,8 +440,8 @@ text {
 }
 
 #tooltip {
-  position: absolute;
-  width: 220px;
+  position: fixed;
+  width: 240px;
   height: auto;
   padding: 10px;
   background-color:rgb(238,238,238);
@@ -434,6 +451,8 @@ text {
   box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
   pointer-events: none;
   overview: hidden;
+  
+  z-index: 20;
 }
 
 #tooltip p {
@@ -462,15 +481,15 @@ path.link.ODDS.increases {
 }
 
 path.link.twofive {
-  opacity: 0.25;
+  opacity: 0.4;
 }
 
 path.link.fivezero {
-  opacity: 0.50;
+  opacity: 0.60;
 }
 
 path.link.sevenfive {
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
 path.link.onezerozero {
@@ -498,7 +517,6 @@ path.link.onezerozero {
 	position: absolute;
 	top: 80px;
 	left: -30px;
-	height: 460px;
 	width: 250px;
 	padding: 5px;
 	margin: left;
@@ -520,6 +538,15 @@ path.link.onezerozero {
 	overflow: hidden;
 }
 
+#nodeoverview.risks {
+height: 460px;
+}
+
+#nodeoverview.explore {
+height: 750px;
+}
+
+
 .nodeUL {
 	margin:0;
 }
@@ -536,5 +563,4 @@ path.link.onezerozero {
 	color: black;
 	line-height: .5;
 }
-
 

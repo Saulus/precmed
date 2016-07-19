@@ -81,8 +81,14 @@ public class AList {
 	}
 	
 	public String getName (String key, boolean english) {
-		if (english) return mylist_en.get(key).label;
-		else return mylist_de.get(key).label;
+		if (english) {
+			if (!mylist_en.containsKey(key)) return "";
+			return mylist_en.get(key).label;
+		}
+		else {
+			if (!mylist_de.containsKey(key)) return "";
+			return mylist_de.get(key).label;
+		}
 	}
 	
 	public String getClusterKey (String key) {
