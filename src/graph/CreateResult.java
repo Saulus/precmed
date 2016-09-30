@@ -8,7 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import lists.AList;
+import lists.ClusterLabels;
+import lists.NodeLabels;
 
 
 
@@ -16,8 +17,10 @@ import lists.AList;
  * Interface class
  */
 public class CreateResult {
-	private HashMap<String,AList> mykeylists = new HashMap<String,AList>(); 
-	private AList clusterlist;
+	private NodeLabels nodelabels; 
+	private ClusterLabels clusterlabels; 
+	private EdgeList edges;
+	private NodeList nodes;
 
 	
 	List<ResultSet> fullresults = new ArrayList<ResultSet>();
@@ -50,10 +53,10 @@ public class CreateResult {
 		}
 		
 		public void roundMe () {
-				risk = (double) Math.round(risk*1000)/1000;
+				risk = (double) Math.round(risk*10000)/10000;
 				if (rrisk != 0) rrisk = (double) Math.round(rrisk*100)/100;
-				if (prevalence != 0) prevalence = (double) Math.round(prevalence*10000)/10000;
-				if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
+				//if (prevalence != 0) prevalence = (double) Math.round(prevalence*10000)/10000;
+				//if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
 				if (mean_age != 0) mean_age = (double) Math.round(mean_age*10)/10;
 		}
 	}
@@ -93,18 +96,20 @@ public class CreateResult {
 		}
 		
 		public void roundMe () {
-			odds = (double) Math.round(odds*1000)/1000;
-			oddstransformed = (double) Math.round(oddstransformed*1000)/1000;
+			odds = (double) Math.round(odds*1000000)/1000000;
+			oddstransformed = (double) Math.round(oddstransformed*10000)/10000;
 			if (pvalue != 0) pvalue = (double) Math.round(pvalue*1000)/1000;
-			if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
+			//if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
 			if (mean_age != 0) mean_age = (double) Math.round(mean_age*10)/10;
 		}
 	}
 	
 	
-	public CreateResult (HashMap<String,AList> mylists, AList clusterlist ) {
-		this.mykeylists = mylists;
-		this.clusterlist = clusterlist;
+	public CreateResult (NodeList nodes,EdgeList edges,NodeLabels nodelabels,ClusterLabels clusterlabels ) {
+		this.nodes = nodes;
+		this.edges = edges;
+		this.nodelabels = nodelabels;
+		this.clusterlabels = clusterlabels;
 	}
 
 	
@@ -118,9 +123,13 @@ public class CreateResult {
 		if (istarget) {
 			result.risk=graph.getRisk(key, features);
 			// calc base risk with age & gender
-			double baserisk = graph.getRisk(key, baseriskfeatures);
-			if (baserisk==0.) baserisk =result.incidence;
-			result.rrisk=result.risk/baserisk;
+			if (result.risk < 0.01) result.rrisk = 0; //basically: exclude risks <1%
+			else {
+				//double baserisk = graph.getRisk(key, baseriskfeatures);
+				//if (baserisk==0.) baserisk =result.incidence;
+				//result.rrisk=result.risk/baserisk;
+				result.rrisk=result.risk/result.incidence; //CAVE: currently calculated like this... to be discussed!
+			}
 		} else {
 			result.risk=1; // already present
 			result.rrisk=result.risk/result.prevalence;

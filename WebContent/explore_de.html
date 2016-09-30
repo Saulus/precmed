@@ -73,13 +73,6 @@
 	<div id="configurator" class="container_item selector modeselector">
 		<div class="adder"><input type="button" class="button3" id="configuratorX" value="X" /></div>
 		<b>Configure view</b><br>
-		<table>
-		<tr>
-			  <td>Score base: </td>
-			  <td><form id="mode_form"><label><input type="radio" name="mode" value="ABS" checked> Absolute risk score</label>
-			  <label><input type="radio" name="mode" value="REL"> Relative risk factor</label></form></td>
-		</tr>
-		</table>
 		<form id="config_form">
 		<table>
 		<tr>
@@ -90,10 +83,22 @@
 			<td><label><input type="checkbox" name="nodetypes" value="DIS" checked> Diseases</label> <label><input type="checkbox" name="nodetypes" value="MED" checked> Medications</label></td>
 		</tr>
 		<tr>
-			
-		</tr><tr>
-			<td><label for="prevalence">Prevalence: </label></td>
+			<td><label for="prevalence">Node prevalence: </label></td>
 			<td><div class="container_row"><div style="width: 80px;"><input type="text" id="prevalence" readonly style="border:0; color:rgb(255, 130, 0);" size="7"></div><div style="width: 150px;" id="prevslider"></div></div></td>
+		</tr>
+		<tr>
+			<td><label for="mean_age">Node mean age: </label></td>
+			<td><div class="container_row"><div style="width: 80px;"><input type="text" id="mean_age" readonly style="border:0; color:rgb(255, 130, 0);" size="7"></div><div style="width: 150px;" id="ageslider"></div></div></td>
+		</tr>
+		<tr><td colspan=2><hr></td></tr>
+		<tr>
+			<td>Link depth:</td>
+			<td><label><input type="radio" name="linkdepth" value="ALL"> All</label><label><input type="radio" name="linkdepth" value="DIRECT" checked> Direct only</label>
+			<!--<label><input type="radio" name="linkdepth" value="CONNECTED" checked> Connected only (2+)</label>--></td>
+		</tr>
+		<tr>
+			<td>Link significance:</td>
+			<td><label><input type="radio" name="significance" value="ALL"> All</label><label><input type="radio" name="significance" value="ONLY" checked> Significant only</label></td>
 		</tr>
 		</table>
 		</form>		

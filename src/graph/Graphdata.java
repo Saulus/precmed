@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import au.com.bytecode.opencsv.CSVReader;
@@ -72,6 +73,14 @@ public class Graphdata {
 		if (readIn.size()==0 )
 			throw new Exception("Configuration File is empty");
 		Edge edge;
+		//Dheban - remove
+		/*Random randomGenerator = new Random();
+		int r_start = 2;
+		int r_end=3;
+		int range = r_end - r_start + 1;
+		double fraction;
+		double newor;
+		*/
 		for (String[] nextline : readIn) {
 			if (!nextline[sourceCol].isEmpty()) {
 				edge = new Edge();
@@ -94,6 +103,20 @@ public class Graphdata {
 				try {edge.auc=Double.parseDouble(nextline[aucCol]);} catch (Exception e) {}
 				try {edge.ppv1=Double.parseDouble(nextline[ppv1Col]);} catch (Exception e) {}
 				try {edge.beta=Double.parseDouble(nextline[betaCol]);} catch (Exception e) {}
+			
+				/*
+				//the follwing is just for mitigating Dhebans errors: ORs too high (because of downsampling), betas missing
+				if (edge.or>r_end && !edge.source.equals(Consts.geschlechtattribute) && !edge.source.equals(Consts.intercept)){
+					 fraction = range * randomGenerator.nextDouble();
+					 newor = fraction + r_start;
+					 edge.or=newor;
+				}
+				if (edge.beta==0)
+					edge.beta=Math.log(edge.or);
+				//verify edge -> do not include models with tst AUC < 0.6
+				if (edge.auc >= 0.55 && edge.incidence_target>=0.0002)
+					mylist.add(edge);
+				*/
 				mylist.add(edge);
 			}
 		}

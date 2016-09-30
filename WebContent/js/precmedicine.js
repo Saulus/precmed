@@ -3,6 +3,7 @@
 //filter init
 var prevalence_min=0, prevalence_max=15;
 var age_min=0, age_max=99;
+var pvalue_max=0.05;
 
 var linkDistance=100,
 	friction=0.4,
@@ -358,6 +359,10 @@ $("input[name=nodetypes]:checkbox").change(function () {
 });
 
 $("input[name=linkdepth]:radio").change(function () {
+	drawGraphs(); 
+});
+
+$("input[name=significance]:radio").change(function () {
 	drawGraphs(); 
 });
 
@@ -1137,6 +1142,10 @@ function resetFilter() {
 	
 	$('input[name=linkdepth]', '#config_form').filter('[value=DIRECT]').prop('checked', true);
 	
+	if (mode=="EXPLORE")
+		$('input[name=significance]', '#config_form').filter('[value=ONLY]').prop('checked', true);
+	else $('input[name=significance]', '#config_form').filter('[value=ALL]').prop('checked', true);
+	
 	filtercriteria = {};
 
 }
@@ -1169,16 +1178,21 @@ function toBeFilteredOut(node) {
 
 function showLink(link,exploreMode,focusedOnly) {
 	var modus= $('input[name=linkdepth]:checked', '#config_form').val();
+	var modus_sign= $('input[name=significance]:checked', '#config_form').val();
+	var isfine = true;
 	if (exploreMode) {
 		if (focusedOnly && modus != "ALL") 
-			return (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
-		else return true;
+			isfine = (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
+		else isfine=true;
+		if (modus_sign != "ALL") isfine=isfine && (link.pvalue<=pvalue_max);
+		return isfine;
 	} else {
 		var isfine = true;
 		if (modus != "ALL") 
 			isfine = (!link.source.istarget && link.target.istarget);
 		if (focusedOnly) 
 			isfine = isfine && (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
+		if (modus_sign != "ALL") isfine=isfine && (link.pvalue<=pvalue_max);
 		return isfine ;
 	}
 	
@@ -1268,7 +1282,22 @@ function drawListGraph(type_pos,chartid) {
 				: "translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"; })*/
 		.on("mousemove", mousemoveTooltipNode)
           .on("mouseout", mouseoutTooltip)
-		  .on("dblclick", click_link);
+		  .on("dblclick", function(d){
+            nodeClickInProgress=false;
+            click_link(d);
+        })
+		.on("click",  function(d){
+			// this is a hack so that click doesnt fire on the1st click of a dblclick
+            if (!nodeClickInProgress ) {
+                nodeClickInProgress = true;
+                setTimeout(function(){
+                    if (nodeClickInProgress) { 
+                        nodeClickInProgress = false;
+                        switch2graph(d);
+                    }
+				},200); 
+			}
+        });
 
 	  var kx = w,
 	      ky = h / 1;
@@ -1353,6 +1382,20 @@ function wrap(text) {
 		if (d.label)
 			window.open("https://www.clinicalkey.com/#!/search/"+d.label.substr(d.label.indexOf(" ")));
 	  }
+	  
+ function switch2graph(d) {
+	 if (d.children) return;
+	 if (d.key) {
+		 //focus
+		for (var i=0; i< graphnodes.length; i++) {
+			if (graphnodes[i].key == d.key) {
+				graphnodes[i].isCurrentlyFocused=true;
+			} else graphnodes[i].isCurrentlyFocused=false;
+		}
+		$( "#tabs" ).tabs({ active: 1 });
+	 }
+ }
+	  
  //TOOLTIP functions
  	var mousemoveTooltipNode = function(d) {
 	  var mytext="";
@@ -1386,7 +1429,7 @@ function wrap(text) {
 			.text(null);
 			d3.select("#tooltip #t_cluster")
 			.html("<td width=80>Group:</td><td>" +  d.clusterlabel+"</td>");
-			if (mode=="RISKS") {
+			if (mode=="RISKS" && d.istarget) {
 			  d3.select("#tooltip #t_absrisk")
 				.html("<td>Abs. Risk:</td><td>" +round(d.risk * 100,1) + "%"+"</td>");
 			  d3.select("#tooltip #t_relrisk")
@@ -1434,14 +1477,19 @@ function wrap(text) {
 	};
 	
 	var mousemoveTooltipLink = function(d) {
+	 if (d.pvalue<=pvalue_max) significant = true;
+	 else significant = false;
+	 if (significant)
+		 sig_str=" *";
+	 else sig_str="";
 	  d3.select("#tooltip #t_heading")
-			.text(d.source.key + " to " + d.target.key);
+			.text(d.source.key + " to " + d.target.key + sig_str);
 	  d3.select("#tooltip #t_type")
 			.html("<td width=80>Type:</td><td>" +  d.typelabel+"</td>");
 		d3.select("#tooltip #t_cluster")
 			.text(null);
 		d3.select("#tooltip #t_absrisk")
-			.html("<td>Odds Ratio:</td><td>" + d.odds+"</td>");
+			.html("<td>Odds Ratio:</td><td>" + round(d.odds,3)+"</td>");
 		  d3.select("#tooltip #t_relrisk")
 			.text(null);
 		  d3.select("#tooltip #t_prev")
@@ -1450,7 +1498,11 @@ function wrap(text) {
 			.html("<td>Incidence:</td><td>" + round(d.incidence* 100,2)+"%"+"</td>");
 		  d3.select("#tooltip #t_mean_age")
 			.html("<td>Mean Age:</td><td>" + d.mean_age+"</td>");
+		if (significant)
 		  d3.select("#tooltip #t_link")
+			.html("<td colspan=2>* significant correlation</td>");
+		else 
+			d3.select("#tooltip #t_link")
 			.text(null);
 			
 		var xPosition = d3.event.clientX + 5;

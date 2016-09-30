@@ -2,9 +2,13 @@ package servlets;
 
 import configuration.*;
 import graph.CreateResult;
+import graph.EdgeList;
 import graph.Graphdata;
+import graph.Node;
+import graph.NodeList;
 import graph.TreeNode;
-import lists.AList;
+import lists.ClusterLabels;
+import lists.NodeLabels;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,10 +26,11 @@ import com.google.gson.Gson;
 class RequestSet {
 	public String AGE;
 	public String GENDER;
-	public String COUNT_MED;
-	public String COUNT_DIS;
-	public String[] DIS;
-	public String[] MED;
+	public String COUNT_ATC;
+	public String COUNT_ICD;
+	public String HOSP;
+	public String[] ICD;
+	public String[] ATC;
 	
 	public String view; //GRAPH or RISKS
 	public String lang;//EN or DE
@@ -51,11 +56,15 @@ class RequestSet {
 public class Graph extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	private HashMap<String,AList> mykeylists = new HashMap<String,AList>(); 
-	private AList clusterlist;
+	private NodeLabels nodelabels = new NodeLabels(); 
+	private ClusterLabels clusterlabels = new ClusterLabels(); 
+	private EdgeList edges = new EdgeList();
+	private NodeList nodes = new NodeList();
 	
-	public static String graphFile = Init.getWebInfPath() + "/"+Consts.graphcsv;
-	private Graphdata graph;
+	public static String label_path = Init.getWebInfPath() + "/node_labels";
+	public static String clusterFile = Init.getWebInfPath() + "/cluster_and_types.csv";
+	public static String edges_path = Init.getWebInfPath() + "/edges";
+	public static String nodesFile = Init.getWebInfPath() + "/nodes.csv";
 	
 	private boolean hasError = false;
 	
@@ -68,48 +77,42 @@ public class Graph extends HttpServlet {
      */
     public Graph() {
         super();
-        Gson gson = new Gson();
         
-        //read in lists
+      //Read in lists
+        
         try {
-        	mykeylists.put("MED",new AList(Lists.medlistFile,new ListTypeKonfigICD(),gson));
+        	nodelabels.readInLists(label_path);
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.medlistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
+    		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}
         
         try {
-        	mykeylists.put("DIS",new AList(Lists.dislistFile,new ListTypeKonfigATC(),gson));
+        	clusterlabels.readInList(clusterFile);
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.dislistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + clusterFile);
+    		System.err.println(e.getMessage());
+    		e.printStackTrace();
+    	}
+        
+      //Read in graphdata
+        try {
+        	nodes.readInList(nodesFile);
+        } catch (Exception e) {
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + nodesFile);
+    		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}
         
         try {
-        	mykeylists.put("GEN",new AList(Lists.genlistFile,new ListTypeKonfigOTHER(),gson));
-       } catch (Exception e) {
-   		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.genlistFile);
-   		e.printStackTrace();
-       }
-        
-        try {
-        	clusterlist = new AList(Lists.clusterlistFile,new ListTypeKonfigCluster(),gson);
+        	edges.readInLists(edges_path, nodes);
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.clusterlistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + edges_path);
+    		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}
         
-
-        //Read in graphdata
-        try {
-        	graph=new Graphdata(graphFile);
-        } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + graphFile);
-    		e.printStackTrace();
-    		this.hasError=true;
-    	}
-        
-	        
     }
 
 	/**
@@ -142,8 +145,8 @@ public class Graph extends HttpServlet {
 				
 				if (hasError) response.sendError(520, "Init-Fehler");
 				else {
-					HashMap<String,Double> features = new HashMap<String,Double>();
-					HashMap<String,Double> baseriskfeatures = new HashMap<String,Double>();
+					HashMap<Node,Double> features = new HashMap<Node,Double>();
+					HashMap<Node,Double> baseriskfeatures = new HashMap<Node,Double>();
 					Gson gson = new Gson(); 
 					String jsonString = "{}";
 					boolean english=true;
@@ -174,35 +177,47 @@ public class Graph extends HttpServlet {
 						if (myrequest.topX != null) {
 							topX=Integer.valueOf(myrequest.topX);
 						}
+						double val;
 						
 						//BUild features
 							//Alter
 							if (myrequest.AGE != null) {
-								features.put(Consts.alterattribute, parseFeature(myrequest.AGE));
-								baseriskfeatures.put(Consts.alterattribute, features.get(Consts.alterattribute));
+								val = parseFeature(myrequest.AGE)/5; //age is scaled by 5
+								features.put(nodes.getNode(Consts.alterattribute), val );
+								baseriskfeatures.put(nodes.getNode(Consts.alterattribute), val);
 							}
 							//geschlecht
 							if (myrequest.GENDER != null) {
-								features.put(Consts.geschlechtattribute, parseFeature(myrequest.GENDER)-1); //Geschlecht is 0/1 coded, not 1/2
-								baseriskfeatures.put(Consts.geschlechtattribute, features.get(Consts.geschlechtattribute));
+								val = parseFeature(myrequest.GENDER)-1; //Geschlecht is 0/1 coded, not 1/2
+								features.put(nodes.getNode(Consts.geschlechtattribute), val );
+								baseriskfeatures.put(nodes.getNode(Consts.geschlechtattribute), val);
 							}
-							if (myrequest.COUNT_DIS != null)
-								features.put(Consts.numberMEDattribute, parseFeature(myrequest.COUNT_DIS));
-							if (myrequest.COUNT_MED != null)
-								features.put(Consts.numberDISattribute, parseFeature(myrequest.COUNT_MED));
+							if (myrequest.COUNT_ICD != null) {
+								val = parseFeature(myrequest.COUNT_ICD);
+								features.put(nodes.getNode(Consts.numberDISattribute), val );
+							}
+							if (myrequest.COUNT_ATC != null) {
+								val = parseFeature(myrequest.COUNT_ATC);
+								features.put(nodes.getNode(Consts.numberMEDattribute), val );
+							}
+							//HOSP
+							if (myrequest.HOSP != null) {
+								val = parseFeature(myrequest.HOSP);
+								features.put(nodes.getNode(Consts.hospattribute), val );
+							}
 							//atc
-							for (int i=0; i<myrequest.MED.length; i++) {
-								features.put(myrequest.MED[i],1.);
+							for (int i=0; i<myrequest.ATC.length; i++) {
+								features.put(nodes.getNode(myrequest.ATC[i]),1.);
 							}
 							//icd
-							for (int i=0; i<myrequest.DIS.length; i++) {
-								features.put(myrequest.DIS[i],1.);
+							for (int i=0; i<myrequest.ICD.length; i++) {
+								features.put(nodes.getNode(myrequest.ICD[i]),1.);
 							}
 					}
 					
 					//calc risk scores and make json
-					CreateResult res = new CreateResult(mykeylists, clusterlist);
-					res.calcRiskLists(graph, features,baseriskfeatures,english,topX);
+					CreateResult res = new CreateResult(nodes,edges,nodelabels,clusterlabels);
+					res.calcRiskLists(features,baseriskfeatures,english,topX);
 					
 					TreeNode result = new TreeNode("ROOT","Risks");
 					result.add(res.graphNode(graph));

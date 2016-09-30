@@ -15,23 +15,19 @@ public final class Consts {
 
 	public static final String graphcsv= "graphdata.csv";
 	
-	public static final String alterattributeOrig="ALTER";
 	public static final String alterattribute="AGE";
-	public static final String geschlechtattributeOrig="GESCHLECHT";
 	public static final String geschlechtattribute="GENDER";
-	public static final String numberMEDattributeOrig="NUMBER_UNIQUE_ATC";
-	public static final String numberMEDattribute="COUNT_MED";
-	public static final String numberDISattributeOrig="NUMBER_UNIQUE_ICD";
-	public static final String numberDISattribute="COUNT_DIS";
-	public static final String todattributeOrig="TOD";
+	public static final String numberMEDattribute="COUNT_ATC";
+	public static final String numberDISattribute="COUNT_ICD";
 	public static final String todattribute="DEATH";
-	public static final String intercept="(INTERCEPT)";
+	public static final String hospattribute="HOSP";
+	public static final String intercept="INTERCEPT";
 	//public static final String atcattribute="ATC";
 	//public static final String icdattribute="ICD";
 	
 	public static final int topX = 20; //return only Top n risks 
 	
-	public static final int incidentYears = 5; //Year range for incidence (i.e. 2011-2015), used for scaling back
+	public static final int incidentYears = 4; //Year range for incidence (i.e. 2011-2015), used for scaling back
 	
 	
 	
