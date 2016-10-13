@@ -2,6 +2,7 @@ package graph;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class TreeNode {
 	public String key;
@@ -22,6 +23,14 @@ public class TreeNode {
 	
 	public void add(Object a) {
 		children.add(a);
+	}
+	
+	public void addAll(List l) {
+		children.addAll(l);
+	}
+	
+	public void addAll(Collection l) {
+		children.addAll(l);
 	}
 	
 	public Collection<Object> getChildren () {

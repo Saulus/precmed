@@ -2,12 +2,13 @@ package servlets;
 
 import configuration.*;
 import graph.CreateResult;
-import graph.Graphdata;
+import graph.EdgeList;
+import graph.NodeList;
 import graph.TreeNode;
-import lists.AList;
+import lists.ClusterLabels;
+import lists.NodeLabels;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
@@ -44,13 +45,18 @@ class RequestSetSingle {
 public class Single extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	private HashMap<String,AList> mykeylists = new HashMap<String,AList>(); 
-	private AList clusterlist;
+	private NodeLabels nodelabels = new NodeLabels(); 
+	private ClusterLabels clusterlabels = new ClusterLabels(); 
+	private EdgeList edges = new EdgeList();
+	private NodeList nodes = new NodeList();
 	
-	public static String graphFile = Init.getWebInfPath() + "/"+Consts.graphcsv;
-	private Graphdata graph;
+	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
+	public static String clusterFile = Init.getWebInfPath() + "/graphdata/cluster_and_types.csv";
+	public static String edges_path = Init.getWebInfPath() + "/graphdata/edges";
+	public static String nodesFile = Init.getWebInfPath() + "/graphdata/nodes.csv";
 	
 	private boolean hasError = false;
+	
 	
 	/*
 	private Calculationv1 calcv1 = new Calculationv1();
@@ -61,47 +67,40 @@ public class Single extends HttpServlet {
      */
     public Single() {
         super();
-        Gson gson = new Gson();
+        //Read in lists
         
-        //read in lists
         try {
-        	mykeylists.put("MED",new AList(Lists.medlistFile,new ListTypeKonfigICD(),gson));
+        	nodelabels.readInLists(label_path,true);
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.medlistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
+    		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}
         
         try {
-        	mykeylists.put("DIS",new AList(Lists.dislistFile,new ListTypeKonfigATC(),gson));
+        	clusterlabels.readInList(clusterFile);
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.dislistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + clusterFile);
+    		System.err.println(e.getMessage());
+    		e.printStackTrace();
+    	}
+        
+      //Read in graphdata
+        try {
+        	nodes.readInList(nodesFile);
+        } catch (Exception e) {
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + nodesFile);
+    		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}
         
         try {
-        	mykeylists.put("GEN",new AList(Lists.genlistFile,new ListTypeKonfigOTHER(),gson));
-       } catch (Exception e) {
-   		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.genlistFile);
-   		e.printStackTrace();
-       }
-        
-        try {
-        	clusterlist = new AList(Lists.clusterlistFile,new ListTypeKonfigCluster(),gson);
+        	edges.readInLists(edges_path, nodes);
         } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + Lists.clusterlistFile);
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + edges_path);
+    		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}
-        
-        
-        //Read in graphdata
-        try {
-        	graph=new Graphdata(graphFile);
-        } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus Datei " + graphFile);
-    		e.printStackTrace();
-    		this.hasError=true;
-    	}
-        
 	        
     }
 
@@ -147,10 +146,10 @@ public class Single extends HttpServlet {
 					}
 					
 					//calc risk scores and make json
-					CreateResult res = new CreateResult(mykeylists, clusterlist);
-					res.calcSingleNodeList(graph, key, english);
+					CreateResult res = new CreateResult(nodes,edges,nodelabels,clusterlabels);
+					res.calcSingleNodeList(key, english);
+					TreeNode result = res.singleNode(english);
 					
-					TreeNode result = res.singleNode(graph);
 					String myresponse=gson.toJson(result);
 					
 					response.getWriter().append(myresponse);

@@ -3,15 +3,23 @@ package graph;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
 import au.com.bytecode.opencsv.CSVReader;
+import configuration.Consts;
+import utils.Utils;
 
 public class NodeList {
 	private HashMap<String,Node> nodes = new HashMap<String,Node>();
 	
 	public NodeList () {
+	}
+	
+		
+	public static String readInNodeCode(String code_raw) {
+		return code_raw.toUpperCase().replace(Consts.icdattribute, "").replace(Consts.atcattribute, "");
 	}
 	
 	public void readInList(String file) throws Exception {
@@ -39,12 +47,12 @@ public class NodeList {
 			throw new Exception("Configuration File " + file + "is empty");
 		for (String[] nextline : readIn) {
 			if (nextline.length>1) {
-				this.addNode(nextline[codecol].toUpperCase(),true,Double.parseDouble(nextline[prevalencecol]),Double.parseDouble(nextline[incidencecol]),Integer.parseInt(nextline[mean_age_incidencecol]),Integer.parseInt(nextline[mean_age_prevalencecol]));
+				this.addNode(readInNodeCode(nextline[codecol]),true,Utils.parseDouble(nextline[prevalencecol]),Utils.parseDouble(nextline[incidencecol]),Utils.parseInt(nextline[mean_age_incidencecol]),Utils.parseInt(nextline[mean_age_prevalencecol]));
 			}
 		}
 	}
 	
-	public void addNode(String code, boolean code_is_readable) {
+	private void addNode(String code, boolean code_is_readable) {
 		if (!nodes.containsKey(code)) {
 			Node n = new Node(code,code_is_readable);
 			nodes.put(code,n);
@@ -53,7 +61,7 @@ public class NodeList {
 		}
 	}
 	
-	public void addNode(String code, boolean code_is_readable, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
+	private void addNode(String code, boolean code_is_readable, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
 		if (!nodes.containsKey(code)) {
 			Node n = new Node(code,code_is_readable,prevalence,incidence,mean_age_incidence,mean_age_prevalence);
 			nodes.put(code,n);
@@ -74,6 +82,10 @@ public class NodeList {
 	public Node getNode(String code) {
 		if (!this.nodeExists(code)) this.addNode(code, false);
 		return nodes.get(code);
+	}
+	
+	public Collection<Node> getAllNodes() {
+		return this.nodes.values();
 	}
 
 }

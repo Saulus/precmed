@@ -3,7 +3,6 @@ package servlets;
 import configuration.*;
 import graph.CreateResult;
 import graph.EdgeList;
-import graph.Graphdata;
 import graph.Node;
 import graph.NodeList;
 import graph.TreeNode;
@@ -61,17 +60,14 @@ public class Graph extends HttpServlet {
 	private EdgeList edges = new EdgeList();
 	private NodeList nodes = new NodeList();
 	
-	public static String label_path = Init.getWebInfPath() + "/node_labels";
-	public static String clusterFile = Init.getWebInfPath() + "/cluster_and_types.csv";
-	public static String edges_path = Init.getWebInfPath() + "/edges";
-	public static String nodesFile = Init.getWebInfPath() + "/nodes.csv";
+	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
+	public static String clusterFile = Init.getWebInfPath() + "/graphdata/cluster_and_types.csv";
+	public static String edges_path = Init.getWebInfPath() + "/graphdata/edges";
+	public static String nodesFile = Init.getWebInfPath() + "/graphdata/nodes.csv";
 	
 	private boolean hasError = false;
 	
-	/*
-	private Calculationv1 calcv1 = new Calculationv1();
-	private Calculationv2 calcv2 = new Calculationv2();*/
-       
+	
     /**
      * @see HttpServlet#HttpServlet()
      */
@@ -81,7 +77,7 @@ public class Graph extends HttpServlet {
       //Read in lists
         
         try {
-        	nodelabels.readInLists(label_path);
+        	nodelabels.readInLists(label_path,true);
         } catch (Exception e) {
     		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
     		System.err.println(e.getMessage());
@@ -217,11 +213,11 @@ public class Graph extends HttpServlet {
 					
 					//calc risk scores and make json
 					CreateResult res = new CreateResult(nodes,edges,nodelabels,clusterlabels);
-					res.calcRiskLists(features,baseriskfeatures,english,topX);
+					res.createNodes(features,baseriskfeatures,english,topX);
 					
 					TreeNode result = new TreeNode("ROOT","Risks");
-					result.add(res.graphNode(graph));
-					result.add(res.riskNode(english));
+					result.add(res.graphNode(english));
+					result.add(res.listNode(english));
 					String myresponse=gson.toJson(result);
 					
 					response.getWriter().append(myresponse);

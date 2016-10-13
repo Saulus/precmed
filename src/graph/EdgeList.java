@@ -4,19 +4,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import au.com.bytecode.opencsv.CSVReader;
+import configuration.Consts;
+import utils.Utils;
 
 public class EdgeList {
 	private HashMap<String,HashMap<Node,HashMap<Node,Edge>>> edges_by_relation_target_source = new HashMap<String,HashMap<Node,HashMap<Node,Edge>>>();
+	private HashMap<String,HashMap<Node,HashMap<Node,Edge>>> edges_by_relation_source_target = new HashMap<String,HashMap<Node,HashMap<Node,Edge>>>();
 	
+	private Node interceptnode;
 	
 	public EdgeList () {
 	}
 	
 	public void readInLists(String path, NodeList nodes) throws Exception {
+		interceptnode = nodes.getNode(Consts.intercept);
 		Charset inputCharset = Charset.forName("ISO-8859-1");
 		File[] files = new File(path).listFiles();
 		//If this pathname does not denote a directory, then listFiles() returns null. 
@@ -61,18 +69,18 @@ public class EdgeList {
 				for (String[] nextline : readIn) {
 					if (nextline.length>1) {
 						// check for Nodes; or create
-						source=nodes.getNode(nextline[sourcecol].toUpperCase());
-						target=nodes.getNode(nextline[targetcol].toUpperCase());
+						source=nodes.getNode(NodeList.readInNodeCode(nextline[sourcecol]));
+						target=nodes.getNode(NodeList.readInNodeCode(nextline[targetcol]));
 						
-						if (nextline[relationcol].equals("has successor"))
+						if (nextline[relationcol].equals(Consts.riskRelationName))
 							this.addEdge(source,target,nextline[relationcol],
-									Double.parseDouble(nextline[orcol]),
-									Double.parseDouble(nextline[betacol]),
-									Double.parseDouble(nextline[pvalcol]),
-									Double.parseDouble(nextline[number_relationscol]),
-									Double.parseDouble(nextline[proportion_of_incidents_have_sourcecol]),
-									Double.parseDouble(nextline[proportion_source_get_incidentscol]),
-									Integer.parseInt(nextline[mean_agecol]));
+									Utils.parseDouble(nextline[orcol]),
+									Utils.parseDouble(nextline[betacol]),
+									Utils.parseDouble(nextline[pvalcol]),
+									Utils.parseDouble(nextline[number_relationscol]),
+									Utils.parseDouble(nextline[proportion_of_incidents_have_sourcecol]),
+									Utils.parseDouble(nextline[proportion_source_get_incidentscol]),
+									Utils.parseInt(nextline[mean_agecol]));
 						else 
 							this.addEdge(source,target,nextline[relationcol]);
 					}
@@ -83,17 +91,25 @@ public class EdgeList {
 	
 	
 	
-	public void addEdge(Node source, Node target, String relation) {
+	private void addEdge(Node source, Node target, String relation) {
 		Edge e = new Edge(source,target,relation);
+		//Target -> Source
 		if (!edges_by_relation_target_source.containsKey(relation))
 			edges_by_relation_target_source.put(relation, new HashMap<Node,HashMap<Node,Edge>>());
 		if (!edges_by_relation_target_source.get(relation).containsKey(target))
 			edges_by_relation_target_source.get(relation).put(target, new HashMap<Node,Edge>());
 		edges_by_relation_target_source.get(relation).get(target).put(source, e);
 		
+		//Source -> Target
+		if (!edges_by_relation_source_target.containsKey(relation))
+			edges_by_relation_source_target.put(relation, new HashMap<Node,HashMap<Node,Edge>>());
+		if (!edges_by_relation_source_target.get(relation).containsKey(source))
+			edges_by_relation_source_target.get(relation).put(source, new HashMap<Node,Edge>());
+		edges_by_relation_source_target.get(relation).get(source).put(target, e);
+		
 	}
 	
-	public void addEdge(Node source, Node target, String relation,double or,double pvalue,double beta,double number_relations,double proportion_of_incidents_have_source,double proportion_source_get_incidents,int mean_age_of_incident_patients_with_condition_source) {
+	private void addEdge(Node source, Node target, String relation,double or,double beta,double pvalue,double number_relations,double proportion_of_incidents_have_source,double proportion_source_get_incidents,int mean_age_of_incident_patients_with_condition_source) {
 		this.addEdge(source, target, relation);
 		Edge e = edges_by_relation_target_source.get(relation).get(target).get(source);
 		e.or=or;
@@ -105,38 +121,79 @@ public class EdgeList {
 		e.mean_age_of_incident_patients_with_condition_source=mean_age_of_incident_patients_with_condition_source;
 	}
 	
-	/*
-	public ArrayList<Node> getConnectedNodes(Node node) {
-		ArrayList<Node> nodes = new ArrayList<Node>();
-		
-		//add all sources for this target
-		if (targetlist.containsKey(key)) {
-			for (String addKey : this.targetlist.get(key).keySet())
-				if (!addKey.equals(Consts.intercept)) nodes.add(addKey);
-		}
-		//add all targets for this source
-		if (sourcelist.containsKey(key)) {
-			for (String addKey : this.sourcelist.get(key).keySet())
-				if (!addKey.equals(Consts.intercept)) nodes.add(addKey);
-		}
-		if (nodes.size()>0) nodes.add(key);
-		return nodes;
+	public boolean nodeIsTarget(String relation, Node node) {
+		return (edges_by_relation_target_source.containsKey(relation) &&
+				edges_by_relation_target_source.get(relation).containsKey(node));
 	}
 	
-		
-	public double getRisk(String target, HashMap<String,Double> features) {
+	public double getRisk4Target(Node target, HashMap<Node,Double> features) {
 		double coeffs;
-		if (targetlist.get(target).get(Consts.intercept) != null) coeffs = targetlist.get(target).get(Consts.intercept).beta; //Math.log(targetlist.get(target).get(Consts.intercept).or);
+		if (edges_by_relation_target_source.get(Consts.riskRelationName).get(target).containsKey(interceptnode))
+			coeffs = edges_by_relation_target_source.get(Consts.riskRelationName).get(target).get(interceptnode).beta; //Math.log(targetlist.get(target).get(Consts.intercept).or);
 		else coeffs=0.;
-		for (String feature : features.keySet()) {
-			if (targetlist.get(target).get(feature) != null)
-				coeffs += features.get(feature) * targetlist.get(target).get(feature).beta; // Math.log(targetlist.get(target).get(feature).or); 
+		for (Node feature : features.keySet()) {
+			if (edges_by_relation_target_source.get(Consts.riskRelationName).get(target).containsKey(feature))
+				coeffs += features.get(feature) * edges_by_relation_target_source.get(Consts.riskRelationName).get(target).get(feature).beta; // Math.log(targetlist.get(target).get(feature).or); 
 		}
 		double odds = Math.exp(coeffs);
 		double prob = odds / (1+odds);
 		
 		return prob;
 	}
+	
+	public Set<String> getAllRelations() {
+		return edges_by_relation_target_source.keySet();
+	}
+	
+	
+	public ArrayList<Node> getTargetNodes(String relation, Node sourcenode) {
+		ArrayList<Node> nodes = new ArrayList<Node>();
+		
+		nodes.addAll(edges_by_relation_source_target.get(relation).get(sourcenode).keySet());
+		
+		return nodes;
+	}
+	
+	public ArrayList<Node> getConnectedNodes(Node sourcenode) {
+		HashSet<Node> nodes = new HashSet<Node>();
+		
+		for (String rel: edges_by_relation_source_target.keySet()) {
+			nodes.addAll(edges_by_relation_source_target.get(rel).get(sourcenode).keySet());
+		}
+		for (String rel: edges_by_relation_target_source.keySet()) {
+			nodes.addAll(edges_by_relation_target_source.get(rel).get(sourcenode).keySet());
+		}
+		
+		ArrayList<Node> nodes2 = new ArrayList<Node>(nodes);
+		
+		return nodes2;
+	}
+	
+	
+	public boolean hasEdge (Node source, Node target) {
+		for (String rel : edges_by_relation_target_source.keySet()) {
+			if (edges_by_relation_target_source.get(rel).containsKey(target) && 
+					edges_by_relation_target_source.get(rel).get(target).containsKey(source)) return true;
+		}
+		return false;
+	}
+	
+	
+	public List<Edge> getEdges (Node source, Node target) {
+		ArrayList<Edge> edges = new ArrayList<Edge>();
+		
+		for (String rel : edges_by_relation_target_source.keySet()) {
+			if (edges_by_relation_target_source.get(rel).containsKey(target) && 
+					edges_by_relation_target_source.get(rel).get(target).containsKey(source)) 
+				edges.add(edges_by_relation_target_source.get(rel).get(target).get(source));
+		}
+		return edges;
+	}
+	
+	
+	
+		
+	/*
 	
 	public Double getOdds(String source, String target) {
 		return targetlist.get(target).get(source).or;
@@ -189,8 +246,6 @@ public class EdgeList {
 		return targetlist.get(target).get(source).flag_toBeDeleted;
 	}
 	
-	public boolean hasEdge (String source, String target) {
-		return (sourcelist.containsKey(source) && sourcelist.get(source).containsKey(target));
-	}*/
+	*/
 
 }

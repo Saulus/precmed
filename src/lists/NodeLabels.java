@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import au.com.bytecode.opencsv.CSVReader;
+import graph.NodeList;
 
 class NodeInfo {
 	public String code;
@@ -35,10 +36,13 @@ public class NodeLabels {
 		
 	}
 	
-	public void readInLists(String path) throws Exception {
+	public void readInLists(String path, boolean addPrefix2Label) throws Exception {
 		Charset inputCharset = Charset.forName("ISO-8859-1");
 		File[] files = new File(path).listFiles();
 		//If this pathname does not denote a directory, then listFiles() returns null. 
+		
+		String labelpre;
+		String code;
 
 		for (File file : files) {
 		    if (file.isFile()) {
@@ -56,7 +60,12 @@ public class NodeLabels {
 					throw new Exception("Configuration File " + file.getName() + "is empty");
 				for (String[] nextline : readIn) {
 					if (nextline.length>1) {
-						this.addLabel(nextline[codecol].toUpperCase(),nextline[label_decol],nextline[label_engcol],nextline[typecol],nextline[clustercol]);
+						code = NodeList.readInNodeCode(nextline[codecol]);
+						if (addPrefix2Label) {
+							labelpre=code + " ";
+						} else 
+							labelpre="";
+						this.addLabel(code,labelpre + nextline[label_decol],labelpre + nextline[label_engcol],nextline[typecol],nextline[clustercol]);
 					}
 				}
 		    }

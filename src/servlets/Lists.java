@@ -29,7 +29,7 @@ public class Lists extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
 
-	public static String label_path = Init.getWebInfPath() + "/node_labels";
+	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
 	public HashMap<String,String> mykeylists_eng = new HashMap<String,String>(); 
 	public HashMap<String,String> mykeylists_de = new HashMap<String,String>(); 
        
@@ -41,17 +41,17 @@ public class Lists extends HttpServlet {
         Gson gson = new Gson();
         NodeLabels labels = new NodeLabels();
         try {
-        	labels.readInLists(label_path);
+        	labels.readInLists(label_path,true);
         } catch (Exception e) {
     		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
     		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}
         
-        mykeylists_eng.put("DIS",gson.toJson(labels.getListByType("DIS", true)));
-        mykeylists_de.put("DIS",gson.toJson(labels.getListByType("DIS", false)));
-        mykeylists_eng.put("MED",gson.toJson(labels.getListByType("MED", true)));
-        mykeylists_de.put("MED",gson.toJson(labels.getListByType("MED", false)));
+        mykeylists_eng.put("ICD",gson.toJson(labels.getListByType("ICD", true)));
+        mykeylists_de.put("ICD",gson.toJson(labels.getListByType("ICD", false)));
+        mykeylists_eng.put("ATC",gson.toJson(labels.getListByType("ATC", true)));
+        mykeylists_de.put("ATC",gson.toJson(labels.getListByType("ATC", false)));
 
     }
 

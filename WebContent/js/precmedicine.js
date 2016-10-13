@@ -21,8 +21,8 @@ if (mode=="EXPLORE") {
 	gravity=0.2;
 }
 
-var DISlist = [];
-var MEDlist = [];
+var ICDlist = [];
+var ATClist = [];
 
 var graphdata = null;
 var graphnodes = [],
@@ -45,7 +45,7 @@ $.getJSON( ehealthurl+'Demo', function( jsondata ) {
 drawUI();
 reset(); 
 
-// load("MED","#leftValuesMED"); -->
+// load("ATC","#leftValuesATC"); -->
 
 
 // LOADER -->
@@ -56,14 +56,14 @@ function load(loader,form) {
 		myurl = [],
 		intsort=[];
 	
-	if (loader=="DIS" || loader=="ALL") {
-		myvar.push('DISlist');
-		myurl.push(myurlstart+'DIS');
+	if (loader=="ICD" || loader=="ALL") {
+		myvar.push('ICDlist');
+		myurl.push(myurlstart+'ICD');
 		intsort.push(false);
 	}
-	if (loader=="MED" || loader=="ALL") {
-		myvar.push('MEDlist');
-		myurl.push(myurlstart+'MED');
+	if (loader=="ATC" || loader=="ALL") {
+		myvar.push('ATClist');
+		myurl.push(myurlstart+'ATC');
 		intsort.push(false);
 	}
 	
@@ -171,32 +171,32 @@ function drawUI() {
 
 // ACTIONS -->
 
-$("#add_DIS").mouseover(function (e) {
-	$("#DISselector").css('top', e.clientY-15);
-	$("#DISselector").css('left', e.clientX-75);
-	$("#DISselector").show();
+$("#add_ICD").mouseover(function (e) {
+	$("#ICDselector").css('top', e.clientY-15);
+	$("#ICDselector").css('left', e.clientX-75);
+	$("#ICDselector").show();
 });
 
-$("#DISselector").mouseleave(function () {
-	$("#DISselector").hide();
+$("#ICDselector").mouseleave(function () {
+	$("#ICDselector").hide();
 });
 
-$("#DISselectorX").click(function () {
-	$("#DISselector").hide();
+$("#ICDselectorX").click(function () {
+	$("#ICDselector").hide();
 });
 
-$("#add_MED").mouseover(function (e) {
-	$("#MEDselector").css('top', e.clientY -15);
-	$("#MEDselector").css('left', e.clientX-175);
-	$("#MEDselector").show();
+$("#add_ATC").mouseover(function (e) {
+	$("#ATCselector").css('top', e.clientY -15);
+	$("#ATCselector").css('left', e.clientX-175);
+	$("#ATCselector").show();
 });
 
-$("#MEDselector").mouseleave(function () {
-	$("#MEDselector").hide();
+$("#ATCselector").mouseleave(function () {
+	$("#ATCselector").hide();
 });
 
-$("#MEDselectorX").click(function () {
-	$("#MEDselector").hide();
+$("#ATCselectorX").click(function () {
+	$("#ATCselector").hide();
 });
 
 $("#configure").mouseover(function (e) {
@@ -229,51 +229,51 @@ $("#thelegendX").click(function () {
 });
 
 
-$("#searchDIS").on('keyup', function() {
-	search("#optionsDIS",$(this).val(),false);
+$("#searchICD").on('keyup', function() {
+	search("#optionsICD",$(this).val(),false);
 	
 	//hack: de-select if only one value is left to enable new select
-	//if ($("#optionsDIS option:selected").length == 1) $("#optionsDIS option:selected").first().removeAttr("selected");
+	//if ($("#optionsICD option:selected").length == 1) $("#optionsICD option:selected").first().removeAttr("selected");
 });
 
-$("#clearSearchDIS").click(function () {
-	clearsearch("#optionsDIS","#searchDIS","DIS");
+$("#clearSearchICD").click(function () {
+	clearsearch("#optionsICD","#searchICD","ICD");
 });
 
-$("#optionsDIS").change(function () {
-	move("#optionsDIS","#valuesDIS",false);
+$("#optionsICD").change(function () {
+	move("#optionsICD","#valuesICD",false);
 });
 
 
-$("#addDIS").click(function () {
-	move("#optionsDIS","#valuesDIS",false);
+$("#addICD").click(function () {
+	move("#optionsICD","#valuesICD",false);
 });
 
-$("#valuesDIS").change(function () {
-	clearitem("#valuesDIS");
+$("#valuesICD").change(function () {
+	clearitem("#valuesICD");
 });
 
-$("#searchMED").on('keyup', function() {
-	search("#optionsMED",$(this).val(),false);
+$("#searchATC").on('keyup', function() {
+	search("#optionsATC",$(this).val(),false);
 	
 	//hack: de-select if only one value is left to enable new select
-	//if ($("#optionsMED option:selected").length == 1) $("#optionsMED option:selected").first().removeAttr("selected");
+	//if ($("#optionsATC option:selected").length == 1) $("#optionsATC option:selected").first().removeAttr("selected");
 });
 
-$("#clearSearchMED").click(function () {
-	clearsearch("#optionsMED","#searchMED","MED");
+$("#clearSearchATC").click(function () {
+	clearsearch("#optionsATC","#searchATC","ATC");
 });
 
-$("#optionsMED").change(function () {
-	move("#optionsMED","#valuesMED",false);
+$("#optionsATC").change(function () {
+	move("#optionsATC","#valuesATC",false);
 });
 
-$("#addMED").click(function () {
-	move("#optionsMED","#valuesMED",false);
+$("#addATC").click(function () {
+	move("#optionsATC","#valuesATC",false);
 });
 
-$("#valuesMED").change(function () {
-	clearitem("#valuesMED");
+$("#valuesATC").change(function () {
+	clearitem("#valuesATC");
 });
 
 
@@ -296,8 +296,8 @@ $("#demo").change(function () {
 	var myurl=ehealthurl+'Demo'+'?patient='+$("#demo").val();
 	$.getJSON( myurl, function( jsondata ) {
 		$.each(jsondata, function (key, value) {
-			if (key == "DIS") {addListToForm(value,"DISlist","#valuesDIS",false);}
-			else if (key == "MED") {addListToForm(value,"MEDlist","#valuesMED",false);}
+			if (key == "ICD") {addListToForm(value,"ICDlist","#valuesICD",false);}
+			else if (key == "ATC") {addListToForm(value,"ATClist","#valuesATC",false);}
 			else $("#"+key).val(value);
 		});
 		GO();
@@ -455,16 +455,16 @@ function GO() {
 	postdata.topX=$('input[name=topX]:checked', '#view_form').val();
 	postdata.AGE=$("#AGE").val();
 	postdata.GENDER=$("#GENDER").val();
-	postdata.DIS=[];
-	$("#valuesDIS option").each( function() {
-		postdata.DIS.push($(this).val());
+	postdata.ICD=[];
+	$("#valuesICD option").each( function() {
+		postdata.ICD.push($(this).val());
 	});
-	postdata.COUNT_DIS = postdata.DIS.length;
-	postdata.MED=[];
-	$("#valuesMED option").each( function() {
-		postdata.MED.push($(this).val());
+	postdata.COUNT_ICD = postdata.ICD.length;
+	postdata.ATC=[];
+	$("#valuesATC option").each( function() {
+		postdata.ATC.push($(this).val());
 	});
-	postdata.COUNT_MED = postdata.MED.length;
+	postdata.COUNT_ATC = postdata.ATC.length;
 	refreshGraph(JSON.stringify(postdata));
 }
 
@@ -510,7 +510,8 @@ function addListToForm (addList,globalVarList,form,intsort) {
 	var added = false;
 	for (var i = 0; i < window[globalVarList].length; i++) {
 		if ($.inArray(window[globalVarList][i].key,addList)>-1) {
-			var item = '<option value=' + window[globalVarList][i].key + ' title="' + window[globalVarList][i].value.label + '">' + window[globalVarList][i].value.label + '</option>';
+			var label = window[globalVarList][i].value.label;
+			var item = '<option value=' + window[globalVarList][i].key + ' title="' + label + '">' + label + '</option>';
 			addToForm(item,form,intsort);
 			added = true;
 		}
@@ -531,11 +532,11 @@ function move(from,to,intsort) {
 
 function reset() {
 	if (mode=="RISKS") {
-		$("#valuesDIS").find('option').remove();
-		$("#valuesMED").find('option').remove();
+		$("#valuesICD").find('option').remove();
+		$("#valuesATC").find('option').remove();
 		
-		clearsearch("#optionsDIS","#searchDIS","DIS");
-		clearsearch("#optionsMED","#searchMED","MED");
+		clearsearch("#optionsICD","#searchICD","ICD");
+		clearsearch("#optionsATC","#searchATC","ATC");
 	} else {
 		clearsearch("#optionsEXPLORE","#startEXPLORE","ALL");
 	}
@@ -992,8 +993,8 @@ function drawGraph() {
 		.text(function(d) { if (lang==("DE")) { 
 				if (d.key=="GENDER") return "Geschlecht";
 				if (d.key=="AGE") return "Alter"; 
-				if (d.key=="COUNT_MED") return "Anzahl MED"; 
-				if (d.key=="COUNT_DIS") return "Anzahl DIS"; 
+				if (d.key=="COUNT_ATC") return "Anzahl ATC"; 
+				if (d.key=="COUNT_ICD") return "Anzahl ICD"; 
 				} return d.key; 
 		});
 	// Exit any old nodes.
@@ -1068,9 +1069,9 @@ function fillNodesLabelOverview (nodes) {
 	sortednodes=sortArray(nodes,false);
 	for (var i = 0; i < sortednodes.length; i++) {
 		var thislist = "#nodeULEx1";
-		if (sortednodes[i].istarget && sortednodes[i].typekey=="DIS") thislist = "#nodeULPred1";
-		if (sortednodes[i].istarget && sortednodes[i].typekey=="MED") thislist = "#nodeULPred2";	
-		if (!sortednodes[i].istarget && sortednodes[i].typekey=="MED") thislist = "#nodeULEx2";	
+		if (sortednodes[i].istarget && sortednodes[i].typekey=="ICD") thislist = "#nodeULPred1";
+		if (sortednodes[i].istarget && sortednodes[i].typekey=="ATC") thislist = "#nodeULPred2";	
+		if (!sortednodes[i].istarget && sortednodes[i].typekey=="ATC") thislist = "#nodeULEx2";	
 		$(thislist).append('<li class="nodeLI" style="color:'+selectNodesColor(sortednodes[i])+';"><span>'+sortednodes[i].label+'</span></li>');
 	}
 }
@@ -1316,9 +1317,9 @@ function drawListGraph(type_pos,chartid) {
 		  .attr("fill",function(d) { 
 					if (!d.children && (!d.isnew || toBeFilteredOut(d)))  return "#eee";
 					if (d.children) {
-						if (d.key == "DIS" || d.key == "MED" || d.key == "ABS" || d.key == "REL") return "#eee";
+						if (d.key == "ICD" || d.key == "ATC" || d.key == "ABS" || d.key == "REL") return "#eee";
 						else if (d.key == "SERIOUS") return color["GEN"](d.key);
-						else return color["DIS"](d.key);
+						else return color["ICD"](d.key);
 					} else return color[d.typekey](d.clusterkey);
 				});
 
@@ -1339,7 +1340,7 @@ function drawListGraph(type_pos,chartid) {
 					if (!d.children && !d.isnew) return "#353535";
 				})*/
 	      .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
-	      .text(function(d) { return d.children ?  d.label : type_pos == "ABS" ? d.label + ", Risk: " + d.risk : d.label + ", rel. Risk: " + d.rrisk; })
+	      .text(function(d) { return d.children ?  d.label : type_pos == "ABS" ? d.label + ", Score: " + round(d.risk,2) : d.label + ", rel. Score: " + round(d.rrisk,0); })
 		  .call(wrap);
 	 function transform(d) {
 	    return "translate(8," + d.dx * ky / 2 + ")";
@@ -1431,9 +1432,9 @@ function wrap(text) {
 			.html("<td width=80>Group:</td><td>" +  d.clusterlabel+"</td>");
 			if (mode=="RISKS" && d.istarget) {
 			  d3.select("#tooltip #t_absrisk")
-				.html("<td>Abs. Risk:</td><td>" +round(d.risk * 100,1) + "%"+"</td>");
+				.html("<td>Score:</td><td>" +round(d.risk,2) + "</td>");
 			  d3.select("#tooltip #t_relrisk")
-				.html("<td>Rel. Risk:</td><td>" + d.rrisk+"</td>");
+				.html("<td>Rel. score:</td><td>" + round(d.rrisk,1)+"</td>");
 			}
 			else { 
 				d3.select("#tooltip #t_absrisk")
@@ -1443,11 +1444,11 @@ function wrap(text) {
 			}
 		  d3.select("#tooltip #t_prev")
 			.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
-			if (d.typekey == "DIS") {
+			if (d.typekey == "ICD") {
 			  d3.select("#tooltip #t_inc")
 				.html("<td>Incidence:</td><td>" + round(d.incidence * 100,1)+ "%"+"</td>");
 			  d3.select("#tooltip #t_mean_age")
-				.html("<td>Mean Age of incidents:</td><td>" + d.mean_age+"</td>");
+				.html("<td>Mean age of incidents:</td><td>" + d.mean_age+"</td>");
 			  d3.select("#tooltip #t_link")
 				.html("<td colspan=2>Double-click for ClinicalKey Content</td>");
 			} else {
@@ -1489,7 +1490,7 @@ function wrap(text) {
 		d3.select("#tooltip #t_cluster")
 			.text(null);
 		d3.select("#tooltip #t_absrisk")
-			.html("<td>Odds Ratio:</td><td>" + round(d.odds,3)+"</td>");
+			.html("<td>Odds ratio:</td><td>" + round(d.odds,3)+"</td>");
 		  d3.select("#tooltip #t_relrisk")
 			.text(null);
 		  d3.select("#tooltip #t_prev")
@@ -1497,7 +1498,7 @@ function wrap(text) {
 		 d3.select("#tooltip #t_inc")
 			.html("<td>Incidence:</td><td>" + round(d.incidence* 100,2)+"%"+"</td>");
 		  d3.select("#tooltip #t_mean_age")
-			.html("<td>Mean Age:</td><td>" + d.mean_age+"</td>");
+			.html("<td>Mean age:</td><td>" + d.mean_age+"</td>");
 		if (significant)
 		  d3.select("#tooltip #t_link")
 			.html("<td colspan=2>* significant correlation</td>");

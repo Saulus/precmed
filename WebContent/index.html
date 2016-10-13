@@ -61,36 +61,36 @@
 	</ul>
 	<ul class="container_row selection_container">
 					<li class="container_item item2">
-						<div style="position: relative;"><b>Current diseases</b>, <small>i.e. last 12 months</small> <div class="adder"><input type="button" class="button3" id="add_DIS" value="ADD" /></div></div>
+						<div style="position: relative;"><b>Current diseases</b>, <small>i.e. last 12 months</small> <div class="adder"><input type="button" class="button3" id="add_ICD" value="ADD" /></div></div>
 						<div>
 						<img class="container_image" src="img/doctor.png" align="top"/>
-							<select id="valuesDIS" class="valueList" size="8" multiple></select>
+							<select id="valuesICD" class="valueList" size="8" multiple></select>
 						</div>
 					</li>
 					<li class="abstand_hor" />
 					<li class="container_item item2">
-						<div style="position: relative;"><b>Current medications</b>, <small>i.e. last 12 months</small><div class="adder"><input type="button" class="button3" id="add_MED" value="ADD" /></div></div>
+						<div style="position: relative;"><b>Current medications</b>, <small>i.e. last 12 months</small><div class="adder"><input type="button" class="button3" id="add_ATC" value="ADD" /></div></div>
 						<div>
 							<img class="container_image" src="img/pills.png" align="top" />
-							<select id="valuesMED" class="valueList" size="8" multiple></select>
+							<select id="valuesATC" class="valueList" size="8" multiple></select>
 						</div>
 					</li>
 	</ul>
-	<div id="DISselector" class="container_item selector">
-		<div class="adder"><input type="button" class="button3" id="DISselectorX" value="X" /></div>
+	<div id="ICDselector" class="container_item selector">
+		<div class="adder"><input type="button" class="button3" id="ICDselectorX" value="X" /></div>
 		<b>Add current diseases by ICD</b><br>
-		<small>Search: <input type="text" id="searchDIS" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchDIS" value=".d." /></small><br>
-		<input class="button1" type="image" src="img/add.png" id="addDIS" value=".d." align="top"/>
-		<select id="optionsDIS" class="valueList selectorlist" size="12" multiple></select><br>
-		<select id="optionsDIShidden" hidden=True></select><br>
+		<small>Search: <input type="text" id="searchICD" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchICD" value=".d." /></small><br>
+		<input class="button1" type="image" src="img/add.png" id="addICD" value=".d." align="top"/>
+		<select id="optionsICD" class="valueList selectorlist" size="12" multiple></select><br>
+		<select id="optionsICDhidden" hidden=True></select><br>
 	</div>
-	<div id="MEDselector" class="container_item selector">
-		<div class="adder"><input type="button" class="button3" id="MEDselectorX" value="X" /></div>
+	<div id="ATCselector" class="container_item selector">
+		<div class="adder"><input type="button" class="button3" id="ATCselectorX" value="X" /></div>
 		<b>Add current medications by ATC</b><br>
-		<small>Search: <input type="text" id="searchMED" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchMED" value=".d." /></small><br>
-		<input class="button1" type="image" src="img/add.png" id="addMED" value=".d." align="top"/>
-		<select id="optionsMED" class="valueList selectorlist" size="12" multiple></select>
-		<select id="optionsMEDhidden" hidden=True></select><br>
+		<small>Search: <input type="text" id="searchATC" class="searchBox" /><input class="button4" type="image" src="img/delete.png" id="clearSearchATC" value=".d." /></small><br>
+		<input class="button1" type="image" src="img/add.png" id="addATC" value=".d." align="top"/>
+		<select id="optionsATC" class="valueList selectorlist" size="12" multiple></select>
+		<select id="optionsATChidden" hidden=True></select><br>
 	</div>
 </div>
 <div class="abstand_ver"> </div>
@@ -158,7 +158,7 @@
 			<td><input type="text" id="searchNode" class="searchBox" /><img class="button4" type="image" src="img/delete.png" id="clearSearchNode" value=".d." /></td>
 		</tr><tr>
 			<td>Node types to show: </td>
-			<td><label><input type="checkbox" name="nodetypes" value="DIS" checked> Diseases</label> <label><input type="checkbox" name="nodetypes" value="MED" checked> Medications</label></td>
+			<td><label><input type="checkbox" name="nodetypes" value="ICD" checked> Diseases</label> <label><input type="checkbox" name="nodetypes" value="ATC" checked> Medications</label></td>
 		</tr>
 		<tr>
 			<td><label for="prevalence">Node prevalence: </label></td>
