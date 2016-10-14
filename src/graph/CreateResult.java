@@ -140,13 +140,14 @@ public class CreateResult {
 		return result;
 	}
 	
-	private OnlineNode populateNodeOtherRelation (String relation, Node node, boolean english) {
+	private OnlineNode populateNodeOtherRelation (String relation, Node node, boolean english, boolean isnew) {
 		OnlineNode othernode = new OnlineNode();
 		othernode.key=node.getCode();
 		othernode.label=nodelabels.getLabel4Code(node.getCode(), english);
 		othernode.typekey=nodelabels.getType4Code(node.getCode());
 		if (othernode.typekey.equals(""))  othernode.typekey= relation;
 		othernode.typelabel=clusterlabels.getLabel4Code(othernode.typekey, english);
+		othernode.isnew=isnew;
 		
 		return othernode;
 	}
@@ -158,13 +159,14 @@ public class CreateResult {
 		//collect info for source-nodes (which cannot be targets as graph models are incident only)
 		for (Node feature : features.keySet()) {
 			onlinenode = populateNode(feature,false,english);
+			onlinenode.isnew=false;
 			onlinenode.roundMe();
 			existing.add(onlinenode); 
 		}
 		
 		//now targets
 		for (Node target : nodes.getAllNodes()) {
-			if (this.edges.nodeIsTarget(Consts.riskRelationName, target) && !features.containsKey(target.getCode())) {
+			if (this.edges.nodeIsTarget(Consts.riskRelationName, target) && !features.containsKey(target)) {
 				//only new diseases and treatments (as graph models are build like that!)
 				onlinenode = populateNode(target,true,english);	
 				addRisks2Result(features,target,onlinenode);
@@ -183,6 +185,7 @@ public class CreateResult {
 		risks_relative = risks_relative.subList(0, topX);
 		for (int i=0; i<risks_relative.size(); i++) risks_relative.get(i).topX=i;
 		
+		boolean isnew=true;
 		//add other relations
 		for (String relation : edges.getAllRelations()) {
 			if (!relation.equals(Consts.riskRelationName)) {
@@ -191,8 +194,12 @@ public class CreateResult {
 					if (!other_relations.get(relation).containsKey(risknode)) {
 						other_relations.get(relation).put(risknode, new ArrayList<OnlineNode>());
 						for (Node node : edges.getTargetNodes(relation, nodes.getNode(risknode.key))) {
+							isnew=!(features.containsKey(node) || 
+										(features.get(nodes.getNode(Consts.geschlechtattribute))>0 && node.getCode().equals(Consts.maleCUI)) ||
+										(features.get(nodes.getNode(Consts.geschlechtattribute))==0 && node.getCode().equals(Consts.femaleCUI))
+								);
 							other_relations.get(relation).get(risknode).add(
-									populateNodeOtherRelation(relation,node,english)
+									populateNodeOtherRelation(relation,node,english,isnew)
 								);
 						}
 					}
@@ -201,8 +208,12 @@ public class CreateResult {
 					if (!other_relations.get(relation).containsKey(risknode)) {
 						other_relations.get(relation).put(risknode, new ArrayList<OnlineNode>());
 						for (Node node : edges.getTargetNodes(relation, nodes.getNode(risknode.key))) {
+							isnew=!(features.containsKey(node) || 
+									(features.get(nodes.getNode(Consts.geschlechtattribute))>0 && node.getCode().equals(Consts.maleCUI)) ||
+									(features.get(nodes.getNode(Consts.geschlechtattribute))==0 && node.getCode().equals(Consts.femaleCUI))
+							);
 							other_relations.get(relation).get(risknode).add(
-									populateNodeOtherRelation(relation,node,english)
+									populateNodeOtherRelation(relation,node,english,isnew)
 								);
 						}
 					}

@@ -859,8 +859,8 @@ function drawGraphs () {
 			//d3.select("#thegraph").selectAll("*").remove();
 			$("#chart_graph").hide();
 			$("#charts").show();
-			drawListGraph("ABS","#chart_left");
-			drawListGraph("REL","#chart_right");
+			drawListGraph("ABS","#chart_abs");
+			drawListGraph("REL","#chart_rel");
 			//also pre-draw graph 
 			//drawGraph();
 		} else if (graphdata != null && active == 1) {
@@ -1134,7 +1134,7 @@ function resetFilter() {
 	$( "#searchNode" ).val("");
 	$( "#searchNodeLabel" ).val("");
 	
-	$('input[name=topX]', '#view_form').filter('[value=5]').prop('checked', true);
+	$('input[name=topX]', '#view_form').filter('[value=3]').prop('checked', true);
 	
 	$( "#thresholdslider" ).slider( "value",0);
 	$( "#threshold" ).val(">= " + $( "#thresholdslider" ).slider( "value")+ "%");
@@ -1244,46 +1244,101 @@ function filterNodes(){
 
 
 // List-Graph --> 
+
+function getChildren(array,type) {
+	for (j=0; j< array.children.length; j++) {
+		if (array.children[j].key==type) return array.children[j].children;
+	}
+	return null;
+}
+
+function getRiskNode (node) {
+	return getChildren(node,"has_successor")[0];
+}
+
+function getFullLabelText(array,type) {
+	info=getChildren(array,type);
+	if (info==null) return "";
+	text="";
+	for (i=0; i<info.length; i++) {
+		if (!info[i].isnew) 
+			text = text + "<b>"+info[i].label+"</b>, ";
+		else text = text +""+info[i].label+", ";
+	}
+	if (text!="")
+		text='<div class="labellist_div">'+text+"</div>";
+	return text;
+}
+
+var columns = [
+    { head_en: 'Disease', head_de: 'Erkrankung', basecl: 'listtable disease',
+      html: function(row) { return row.label; } },
+	  
+	{ head_en: 'Group', head_de: 'Gruppe', basecl: 'listtable group',
+      html: function(row) { info=getRiskNode(row); return info.clusterlabel; } },
+	  
+    { head_en: 'Risk (abs/rel)', head_de: 'Risiko (abs/rel)', basecl: 'listtable risk',
+      html: function(row) { info=getRiskNode(row); return round(info.risk*100,0) + "% / " + round(info.rrisk,1); } },
+	  
+    { head_en: 'Prevalence / Incidence', head_de: 'Prävalenz / Incidenz', basecl: 'listtable prevalence',
+      html: function(row) { info=getRiskNode(row); return round(info.prevalence*100,1) + "% / " + round(info.incidence*100,1) +"% (at " + info.mean_age + ")"; } },
+	  
+    { head_en: 'Risk Factors ', head_de: 'Risikofaktoren', basecl: 'listtable factors',
+      html: function(row) { return getFullLabelText(row,"has_risk_factor"); } },
+	  
+    { head_en: 'Diagnostic Procedures', head_de: 'Diagnostik', basecl: 'listtable diagnostics',
+		html: function(row) { return getFullLabelText(row,"has_diagnostic_procedure"); } },
+		
+	{ head_en: 'Prevention', head_de: 'Prävention', basecl: 'listtable prevention',
+      html: function(row) { return getFullLabelText(row,"has_prevention"); } }
+];
+
 function drawListGraph(type_pos,chartid) {
 	
+	if (lang==("DE")) engl = false;
+	else engl=true;
+	
 	var chart=d3.select(chartid);
-	chart.selectAll("g").remove();
+	chart.selectAll("thead").remove();
+	chart.selectAll("tbody").remove();
 	
 	var subtree=listtree;
 	for (j=0; j< listtree.length; j++) {
 		if (listtree[j].key == type_pos) {
-			subtree=listtree[j];
+			subtree=listtree[j].children;
 			break;
 		}
 	}
 
 	var w = $(chartid).width(),
-	    h = $(chartid).height(),
-	    x = d3.scale.linear().range([0, w]),
+	    h = $(chartid).height();
+	    /*x = d3.scale.linear().range([0, w]),
 	    y = d3.scale.linear().range([0, h]),
 		kx_top_width = 0.15; 
 		kx_middle_width = 0.3; 
-		kx_last_width = 0.55; 
+		kx_last_width = 0.55; */
 		
-	//console.log(subtree);
-	var partition = d3.layout.partition()
-	    .value(function(d) { return type_pos == "ABS" ? d.risk : d.rrisk; })
-		.sort(null);
-
-	// d3.json(JSON_FILE, function(root) {
-	  var g = chart.selectAll("g")
-	      .data(partition.nodes(subtree))
-	    .enter().append("svg:g")
-	      .attr("transform", function(d) { 
-				if (d.key==type_pos) return "translate(" + x(d.y) + "," + y(d.x) + ")";
-				if (d.children) return "translate(" + x(kx_top_width) + "," + y(d.x) + ")";
-				return "translate(" + x(kx_top_width + kx_middle_width) + "," + y(d.x) + ")"; })
-				/*return d.children ? 
-				"translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"
-				: "translate(" + x(d.y/kx_child_faktor) + "," + y(d.x) + ")"; })*/
-		.on("mousemove", mousemoveTooltipNode)
-          .on("mouseout", mouseoutTooltip)
-		  .on("dblclick", function(d){
+	chart.append('thead').append('tr')
+		.selectAll('th')
+		.data(columns).enter()
+		.append('th')
+		//.attr('class', function(col) {return col.basecl})
+		.text(function(col) {if (engl) return col.head_en; else return col.head_de });	
+	
+	chart.append('tbody')
+		.selectAll('tr')
+		.data(subtree).enter()
+		.append('tr')
+		.attr('class', function(row, i) {
+			d=getRiskNode(row);
+			if (toBeFilteredOut(d)) return 'row_filtered';
+			if (i%2 == 0) return "row_0";
+			else return "row_1";
+		})
+		/*.on("mousemove", mousemoveTooltipNode)
+          .on("mouseout", mouseoutTooltip)*/
+		  .on("dblclick", function(node){
+			  d=getRiskNode(node);
             nodeClickInProgress=false;
             click_link(d);
         })
@@ -1298,55 +1353,22 @@ function drawListGraph(type_pos,chartid) {
                     }
 				},200); 
 			}
-        });
-
-	  var kx = w,
-	      ky = h / 1;
-
-	  g.append("svg:rect")
-	      .attr("width", function(d) { 
-				if (d.key==type_pos) return kx * kx_top_width;
-				if (d.children) return kx * kx_middle_width; 
-				return kx * kx_last_width })
-		  /*
-		  return d.children ? 
-					kx * d.dy / kx_child_faktor :
-					kx * d.dy * kx_child_faktor })*/
-	      .attr("height", function(d) { return d.dx * ky; })
-	      .attr("class", function(d) { return d.children ? "parent" : "child"; })
-		  .attr("fill",function(d) { 
-					if (!d.children && (!d.isnew || toBeFilteredOut(d)))  return "#eee";
-					if (d.children) {
-						if (d.key == "ICD" || d.key == "ATC" || d.key == "ABS" || d.key == "REL") return "#eee";
-						else if (d.key == "SERIOUS") return color["GEN"](d.key);
-						else return color["ICD"](d.key);
-					} else return color[d.typekey](d.clusterkey);
-				});
-
-	  g.append("svg:text")
-	      .attr("transform", transform)
-	      .attr("width", function(d) { 
-				if (d.key==type_pos) return kx * kx_top_width;
-				if (d.children) return kx * kx_middle_width; 
-				return kx * kx_last_width })
-		  /*return d.children ? 
-					kx * d.dy / kx_child_faktor :
-					kx * d.dy * kx_child_faktor })*/
-		  .attr("height", function(d) { return d.dx * ky; })
-		  .attr("x", ".35em")
-		  .attr("dy", ".1em")
-		  .attr("class", function(d) { return d.children ? "parent" : "child"; })
-		  /*.attr("fill",function(d) { 
-					if (!d.children && !d.isnew) return "#353535";
-				})*/
-	      .style("opacity", function(d) { return d.dx * ky > 12 ? 1 : 0; })
-	      .text(function(d) { return d.children ?  d.label : type_pos == "ABS" ? d.label + ", Score: " + round(d.risk,2) : d.label + ", rel. Score: " + round(d.rrisk,0); })
-		  .call(wrap);
-	 function transform(d) {
-	    return "translate(8," + d.dx * ky / 2 + ")";
-	  }
-	  
-
+        })
+		.selectAll('td')
+		.data(function(row, i) {
+			// evaluate column objects against the current row
+		   return columns.map(function(c) {
+			   var cell = {};
+			   d3.keys(c).forEach(function(k) {
+				   cell[k] = typeof c[k] == 'function' ? c[k](row,i) : c[k];
+			   });
+			   return cell;
+		   });
+		}).enter()
+		.append('td')
+		.html(function(col) {return col.html})
+		.attr('class', function(col) {return col.basecl})
+		;
 			  
 }
 
@@ -1398,7 +1420,8 @@ function wrap(text) {
  }
 	  
  //TOOLTIP functions
- 	var mousemoveTooltipNode = function(d) {
+ 	var mousemoveTooltipNode = function(node) {
+		d= getRiskNode(node); 
 	  var mytext="";
 	  if (d.label) mytext=d.label; else mytext=d.key;
 	   if (!d.istarget && !d.children && mode=="RISKS") mytext=mytext + " (existing)";

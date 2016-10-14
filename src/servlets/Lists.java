@@ -41,7 +41,7 @@ public class Lists extends HttpServlet {
         Gson gson = new Gson();
         NodeLabels labels = new NodeLabels();
         try {
-        	labels.readInLists(label_path,true);
+        	labels.readInLists(label_path);
         } catch (Exception e) {
     		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
     		System.err.println(e.getMessage());

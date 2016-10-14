@@ -77,7 +77,7 @@ public class Graph extends HttpServlet {
       //Read in lists
         
         try {
-        	nodelabels.readInLists(label_path,true);
+        	nodelabels.readInLists(label_path);
         } catch (Exception e) {
     		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
     		System.err.println(e.getMessage());
@@ -178,7 +178,7 @@ public class Graph extends HttpServlet {
 						//BUild features
 							//Alter
 							if (myrequest.AGE != null) {
-								val = parseFeature(myrequest.AGE)/5; //age is scaled by 5
+								val = parseFeature(myrequest.AGE)/Consts.agescaler; //age is scaled by 5
 								features.put(nodes.getNode(Consts.alterattribute), val );
 								baseriskfeatures.put(nodes.getNode(Consts.alterattribute), val);
 							}

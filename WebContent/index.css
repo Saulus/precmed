@@ -334,44 +334,137 @@ border:1px solid #ccc;}
 }
 
 
-.charts {
+#LIST {
 padding:0;
+margin: auto;
   list-style: none;
-  
-  color: black;
-  font-weight: bold; 
-   text-align: left;
+   height: 530px; 
+   width: 1050px;
   
   
--ms-box-orient: horizontal;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -ms-flexbox;
-  display: -moz-flex;
-  display: -webkit-flex;
-  display: flex;
-  
-  -webkit-flex-wrap: wrap;
-  flex-wrap: wrap;
-  -webkit-flex-direction: row;
-  flex-direction: row;
+-ms-box-orient: vertical;
+	  display: -webkit-box;
+	  display: -moz-box;
+	  display: -ms-flexbox;
+	  display: -moz-flex;
+	  display: -webkit-flex;
+	  display: flex;
+	  
+	  -webkit-flex-wrap: wrap;
+	  flex-wrap: wrap;
+	  -webkit-flex-direction: column;
+	  flex-direction: column;
 
 }
 
 .chart_list {
+padding:0;
 margin: auto;
-	width: 525px;
+	width: 100%;
 	font-size: 1em;
+	height: 250px; 
+	
+	color: black;
+  font-weight: bold; 
+   text-align: left;
 }
 
-.chart {
-	height: 500px; 
+.list {
+padding-top: 15px;
+font-weight: normal;
 	position: relative;
-	width: 525px;
   display: block;
   margin: auto;
   font-size: 12px;
   text-align:left;
+  height: 92%; 
+  width: 100%;
+  overflow-x:auto;
+  border-collapse: collapse;
+}
+
+.listtable {
+	padding: 5px;
+    text-align: left;
+}
+
+th{
+	font-size: 1em;
+	border-bottom:3px solid #fff;
+	/*background-color: rgb(255, 130, 0);*/
+	background-color: #eee;
+	font-weight: bold; 
+	padding: 5px;
+}
+
+tr:hover {background-color: rgb(255, 130, 0)}
+
+.row_filtered {
+	border-bottom:1px solid #fff;
+	background-color: #eee;
+	color: #aaa;
+	vertical-align:top;
+}
+
+.row_0 {
+border-bottom:1px solid #fff;
+background-color: rgb(248, 215, 205);
+vertical-align:top;
+}
+
+.row_1 {
+border-bottom:1px solid #fff;
+background-color: rgb(252, 236, 232);
+vertical-align:top;
+}
+
+.disease {
+	font-weight: bold; 
+	font-size: 1.1em;
+	width: 20%;
+}
+
+.group {
+	width: 15%;
+}
+
+.risk {
+	width: 7%;
+	text-align: center;
+}
+.prevalence {
+	width: 8%;
+	text-align: center;
+}
+
+.factors {
+	width: 17%;
+
+}
+.diagnostics {
+	width: 17%;
+
+}
+
+.prevention{
+	width: 16%;
+
+}
+
+/*
+.labellist {
+	margin-left: 5px;
+    margin-right: 0px;
+	margin-top: 0px;
+    padding-left: 10px;
+    padding-right: 0px;
+	font-size: 0.9em;
+}*/
+.labellist_div {
+	width: 100%; 
+	font-size: 0.9em;
+	height: 45px;
+	overflow-x:auto;
 }
 
 #GRAPH {

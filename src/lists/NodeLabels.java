@@ -36,26 +36,41 @@ public class NodeLabels {
 		
 	}
 	
-	public void readInLists(String path, boolean addPrefix2Label) throws Exception {
+	public void readInLists(String path) throws Exception {
 		Charset inputCharset = Charset.forName("ISO-8859-1");
 		File[] files = new File(path).listFiles();
 		//If this pathname does not denote a directory, then listFiles() returns null. 
 		
 		String labelpre;
 		String code;
+		String labelde="";
+		String labelen="";
+		String cluster="";
+		boolean addPrefix2Label;
 
 		for (File file : files) {
 		    if (file.isFile()) {
+		    	addPrefix2Label= file.getName().contains("addcode");
 		    	CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file), inputCharset), ';', '"'); //UTF-8?
 		    	List<String[]> readIn = reader.readAll();
 				reader.close();
+				String[] headerline = readIn.get(0);
+				readIn.remove(0);
 				//assign colnumbers for columns needed
 				int typecol=0;
 				int codecol=1;
 				int label_decol=2;
 				int label_engcol=3;
 				int clustercol=4;
-				readIn.remove(0);
+				//and re-assign
+				for (int i =0; i<headerline.length; i++) {
+					if (headerline[i].equals("Type")) typecol=i;
+					if (headerline[i].equals("Code")) codecol=i;
+					if (headerline[i].equals("LabelDE")) label_decol=i;
+					if (headerline[i].equals("LabelEN")) label_engcol=i;
+					if (headerline[i].equals("Cluster")) clustercol=i;
+				}
+				
 				if (readIn.size()==0 )
 					throw new Exception("Configuration File " + file.getName() + "is empty");
 				for (String[] nextline : readIn) {
@@ -65,7 +80,10 @@ public class NodeLabels {
 							labelpre=code + " ";
 						} else 
 							labelpre="";
-						this.addLabel(code,labelpre + nextline[label_decol],labelpre + nextline[label_engcol],nextline[typecol],nextline[clustercol]);
+						if (label_decol<nextline.length) labelde=labelpre+ nextline[label_decol];
+						if (label_engcol<nextline.length) labelen=labelpre+ nextline[label_engcol]; else labelen=labelde;
+						if (clustercol<nextline.length) cluster=nextline[clustercol]; else cluster="";
+						this.addLabel(code,labelde,labelen,nextline[typecol],cluster);
 					}
 				}
 		    }

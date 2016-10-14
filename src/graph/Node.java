@@ -3,44 +3,38 @@ package graph;
 import configuration.Consts;
 
 public class Node {
-	private String code;
-	private boolean code_is_readable; //ICD or ATC (not UMLS)
+	private String code; //ICD or ATC (not UMLS)
+	private String alternative_code; //UMLS 
 	
 	private double prevalence = 0;
 	private double incidence = 0;
 	private int mean_age_incidence = 0;
 	private int mean_age_prevalence = 0;
 	
-	public Node(String code, boolean code_is_readable) {
-		this.setCode(code);
-		this.setCode_readable(code_is_readable);
+	public Node(String readable_code, String alternative_code) {
+		this.code=decideCode(readable_code,alternative_code);
+		this.alternative_code=alternative_code;
 	}
 	
-	public Node(String code, boolean code_is_readable, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
-		this.setCode(code);
-		this.setCode_readable(code_is_readable);
+	public Node(String readable_code, String alternative_code, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
+		this.code=decideCode(readable_code,alternative_code);
+		this.alternative_code=alternative_code;
 		this.setPrevalence(prevalence);
 		this.setIncidence(incidence);
 		this.setMean_age_incidence(mean_age_incidence);
 		this.setMean_age_prevalence(mean_age_prevalence);
+	}
+	
+	public static String decideCode(String readable_code, String alternative_code) {
+		if (readable_code.isEmpty()) return alternative_code;
+		else return readable_code;
 	}
 
 	public String getCode() {
 		return code;
 	}
 
-	public void setCode(String code) {
-		this.code = code;
-	}
 
-
-	public boolean isCode_readable() {
-		return code_is_readable;
-	}
-
-	public void setCode_readable(boolean code_is_readable) {
-		this.code_is_readable = code_is_readable;
-	}
 
 	public double getPrevalence() {
 		return prevalence;

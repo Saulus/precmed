@@ -19,6 +19,9 @@ public class NodeList {
 	
 		
 	public static String readInNodeCode(String code_raw) {
+		if (code_raw.contains(".")) {
+			code_raw=code_raw.substring(0, code_raw.indexOf("."));
+		}
 		return code_raw.toUpperCase().replace(Consts.icdattribute, "").replace(Consts.atcattribute, "");
 	}
 	
@@ -31,6 +34,7 @@ public class NodeList {
 		String[] headerline = readIn.get(0);
 		readIn.remove(0);
 		int codecol=0;
+		int alternative_codecol=0;
 		int prevalencecol=1;
 		int incidencecol=2;
 		int mean_age_incidencecol=3;
@@ -38,6 +42,7 @@ public class NodeList {
 		//and re-assign
 		for (int i =0; i<headerline.length; i++) {
 			if (headerline[i].equals("Node")) codecol=i;
+			if (headerline[i].equals("NodeCUI")) codecol=i;
 			if (headerline[i].equals("prevalence")) prevalencecol=i;
 			if (headerline[i].equals("incidence")) incidencecol=i;
 			if (headerline[i].equals("Mean age of incident")) mean_age_incidencecol=i;
@@ -47,26 +52,25 @@ public class NodeList {
 			throw new Exception("Configuration File " + file + "is empty");
 		for (String[] nextline : readIn) {
 			if (nextline.length>1) {
-				this.addNode(readInNodeCode(nextline[codecol]),true,Utils.parseDouble(nextline[prevalencecol]),Utils.parseDouble(nextline[incidencecol]),Utils.parseInt(nextline[mean_age_incidencecol]),Utils.parseInt(nextline[mean_age_prevalencecol]));
+				this.addNode(readInNodeCode(nextline[codecol]),readInNodeCode(nextline[alternative_codecol]),Utils.parseDouble(nextline[prevalencecol]),Utils.parseDouble(nextline[incidencecol]),Utils.parseInt(nextline[mean_age_incidencecol]),Utils.parseInt(nextline[mean_age_prevalencecol]));
 			}
 		}
 	}
 	
-	private void addNode(String code, boolean code_is_readable) {
+	private void addNode(String readable_code, String alternative_code) {
+		String code=Node.decideCode(readable_code,alternative_code);
 		if (!nodes.containsKey(code)) {
-			Node n = new Node(code,code_is_readable);
+			Node n = new Node(readable_code,alternative_code);
 			nodes.put(code,n);
-		} else {
-			nodes.get(code).setCode_readable(code_is_readable);
-		}
+		} 
 	}
 	
-	private void addNode(String code, boolean code_is_readable, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
+	private void addNode(String readable_code, String alternative_code, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
+		String code=Node.decideCode(readable_code,alternative_code);
 		if (!nodes.containsKey(code)) {
-			Node n = new Node(code,code_is_readable,prevalence,incidence,mean_age_incidence,mean_age_prevalence);
+			Node n = new Node(readable_code,alternative_code,prevalence,incidence,mean_age_incidence,mean_age_prevalence);
 			nodes.put(code,n);
 		} else {
-			nodes.get(code).setCode_readable(code_is_readable);
 			nodes.get(code).setPrevalence(prevalence);
 			nodes.get(code).setIncidence(incidence);
 			nodes.get(code).setMean_age_incidence(mean_age_incidence);
@@ -80,7 +84,13 @@ public class NodeList {
 	}
 	
 	public Node getNode(String code) {
-		if (!this.nodeExists(code)) this.addNode(code, false);
+		if (!this.nodeExists(code)) this.addNode(code, "");
+		return nodes.get(code);
+	}
+	
+	public Node getNode(String readable_code, String alternative_code) {
+		String code=Node.decideCode(readable_code,alternative_code);
+		if (!this.nodeExists(code)) this.addNode(readable_code, alternative_code);
 		return nodes.get(code);
 	}
 	

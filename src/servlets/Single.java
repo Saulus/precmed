@@ -70,7 +70,7 @@ public class Single extends HttpServlet {
         //Read in lists
         
         try {
-        	nodelabels.readInLists(label_path,true);
+        	nodelabels.readInLists(label_path);
         } catch (Exception e) {
     		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
     		System.err.println(e.getMessage());

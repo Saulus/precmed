@@ -21,12 +21,16 @@ public final class Consts {
 	
 	public static final int topX = 3; //return only Top n risks 
 	
-	public static final int incidentYears = 4; //Year range for incidence (i.e. 2011-2015), used for scaling back
+	public static final int agescaler = 5;
 	
 	public static final String riskRelationName = "has_successor";
 	
 	
 	public static final String demo_patients = "demo_patients.csv";	
+	
+	public static final String femaleCUI="C0015780";
+	public static final String maleCUI="C0024554";
+	
 	 /**
  	 * Instantiates a new consts.
  	 */

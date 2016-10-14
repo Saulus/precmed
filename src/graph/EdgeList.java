@@ -23,6 +23,10 @@ public class EdgeList {
 	public EdgeList () {
 	}
 	
+	public static String readInEdgeRelation(String relation_raw) {
+		return relation_raw.toLowerCase().replace(" ", "_");
+	}
+	
 	public void readInLists(String path, NodeList nodes) throws Exception {
 		interceptnode = nodes.getNode(Consts.intercept);
 		Charset inputCharset = Charset.forName("ISO-8859-1");
@@ -37,22 +41,28 @@ public class EdgeList {
 				String[] headerline = readIn.get(0);
 				readIn.remove(0);
 				//assign colnumbers for columns needed
-				int relationcol=0;
-				int sourcecol=1;
-				int targetcol=2;
-				int orcol=3;
-				int betacol=4;
-				int pvalcol=5;
-				int number_relationscol=6;
-				int proportion_of_incidents_have_sourcecol=7;
-				int proportion_source_get_incidentscol=8;
-				int mean_agecol=9;
+				int relationcol=99;
+				int sourcecol=99;
+				int source_alternativecol=99;
+				int targetcol=99;
+				int target_alternativecol=99;
+				int orcol=99;
+				int betacol=99;
+				int pvalcol=99;
+				int number_relationscol=99;
+				int proportion_of_incidents_have_sourcecol=99;
+				int proportion_source_get_incidentscol=99;
+				int mean_agecol=99;
 				
 				//and re-assign
 				for (int i =0; i<headerline.length; i++) {
 					if (headerline[i].equals("Relation")) relationcol=i;
 					if (headerline[i].equals("Source")) sourcecol=i;
+					if (headerline[i].equals("SourceICD")) sourcecol=i;
+					if (headerline[i].equals("SourceCUI")) source_alternativecol=i;
 					if (headerline[i].equals("Target")) targetcol=i;
+					if (headerline[i].equals("TargetICD")) targetcol=i;
+					if (headerline[i].equals("TargetCUI")) target_alternativecol=i;
 					if (headerline[i].equals("OR")) orcol=i;
 					if (headerline[i].equals("beta")) betacol=i;
 					if (headerline[i].equals("p-value")) pvalcol=i;
@@ -61,18 +71,25 @@ public class EdgeList {
 					if (headerline[i].equals("proportion source get incidents")) proportion_source_get_incidentscol=i;
 					if (headerline[i].equals("Mean age of incident patients with condition source")) mean_agecol=i;
 				}
+				//some cols might not be present
+				if (targetcol==99) targetcol=target_alternativecol;
+				if (target_alternativecol==99) target_alternativecol=targetcol;
+				if (sourcecol==99) sourcecol=source_alternativecol;
+				if (source_alternativecol==99) source_alternativecol=sourcecol;
 				
 				if (readIn.size()==0 )
 					throw new Exception("Configuration File " + file.getName() + "is empty");
 				Node source;
 				Node target;
+				String relation;
 				for (String[] nextline : readIn) {
 					if (nextline.length>1) {
 						// check for Nodes; or create
-						source=nodes.getNode(NodeList.readInNodeCode(nextline[sourcecol]));
-						target=nodes.getNode(NodeList.readInNodeCode(nextline[targetcol]));
+						source=nodes.getNode(NodeList.readInNodeCode(nextline[sourcecol]),NodeList.readInNodeCode(nextline[source_alternativecol]));
+						target=nodes.getNode(NodeList.readInNodeCode(nextline[targetcol]),NodeList.readInNodeCode(nextline[target_alternativecol]));
 						
-						if (nextline[relationcol].equals(Consts.riskRelationName))
+						relation=readInEdgeRelation(nextline[relationcol]);
+						if (relation.equals(Consts.riskRelationName))
 							this.addEdge(source,target,nextline[relationcol],
 									Utils.parseDouble(nextline[orcol]),
 									Utils.parseDouble(nextline[betacol]),
@@ -82,7 +99,7 @@ public class EdgeList {
 									Utils.parseDouble(nextline[proportion_source_get_incidentscol]),
 									Utils.parseInt(nextline[mean_agecol]));
 						else 
-							this.addEdge(source,target,nextline[relationcol]);
+							this.addEdge(source,target,relation);
 					}
 				}
 		    }
@@ -148,8 +165,8 @@ public class EdgeList {
 	
 	public ArrayList<Node> getTargetNodes(String relation, Node sourcenode) {
 		ArrayList<Node> nodes = new ArrayList<Node>();
-		
-		nodes.addAll(edges_by_relation_source_target.get(relation).get(sourcenode).keySet());
+		if (edges_by_relation_source_target.get(relation).containsKey(sourcenode))
+			nodes.addAll(edges_by_relation_source_target.get(relation).get(sourcenode).keySet());
 		
 		return nodes;
 	}

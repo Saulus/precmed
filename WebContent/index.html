@@ -100,11 +100,11 @@
 			<li><a href="#LIST">List view</a></li>
 			<li><a href="#GRAPH">Graph view</a></li>
 		</ul>
-		<div id="LIST" class="charts" >
-		<div class="chart_list">By absolute risk <svg class="chart" id="chart_left"></svg></div>
-		<div class="chart_list">By relative risk <svg class="chart" id="chart_right"></svg></div>
+		<div id="LIST" >
+		<div class="chart_list">By absolute risk <table class="list" id="chart_abs"></table></div>
+		<div class="chart_list">By relative risk <table class="list" id="chart_rel"></table></div>
 		</div>
-		<div id="GRAPH" class="risks" style="display: none;" ><svg class="chart risks" id="thegraph"></svg>
+		<div id="GRAPH" class="risks" style="display: none;" ><svg class="risks" id="thegraph"></svg>
 			<div id="nodeoverview" class="risks">
 				<div class="adder"><input type="button" class="button3" id="nodeoverviewX" value="X" /></div>
 				<div style="overflow: auto; height:430px;">
@@ -139,7 +139,7 @@
 		<form id="view_form">
 		<table>
 		<td>Top risks to calculate: </td>
-		<td><label><input type="radio" name="topX" value="5" checked> 5</label> <label><input type="radio" name="topX" value="10"> 10</label> <label><input type="radio" name="topX" value="20"> 20</label> <label><input type="radio" name="topX" value="50"> 50</label></td>
+		<td><label><input type="radio" name="topX" value="3" checked> 3</label> <label><input type="radio" name="topX" value="5"> 5</label> <label><input type="radio" name="topX" value="10"> 10</label> <label><input type="radio" name="topX" value="20"> 20</label></td>
 		</tr></table>
 		 </form>
 		<hr>
