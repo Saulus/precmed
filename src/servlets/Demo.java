@@ -36,6 +36,7 @@ public class Demo extends HttpServlet {
 	class Patient {
 		public String AGE;
 		public String GENDER;
+		public boolean HOSP;
 		public ArrayList<String> ICD = new  ArrayList<String>();
 		public ArrayList<String> ATC = new  ArrayList<String>();
 		
@@ -125,6 +126,8 @@ public class Demo extends HttpServlet {
 							mylist.get(pid_s).ICD.add(headerline[i]);
 						else if (headerline[i].length()==5)
 							mylist.get(pid_s).ATC.add(headerline[i]);
+						else if (headerline[i].startsWith(Consts.hospattribute))
+							mylist.get(pid_s).HOSP = true;
 					}
 				}
 				pid++;

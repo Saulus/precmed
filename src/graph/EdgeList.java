@@ -90,6 +90,7 @@ public class EdgeList {
 						
 						relation=readInEdgeRelation(nextline[relationcol]);
 						if (relation.equals(Consts.riskRelationName))
+							//(Node source, Node target, String relation,double or,double beta,double pvalue,double number_relations,double proportion_of_incidents_have_source,double proportion_source_get_incidents,int mean_age_of_incident_patients_with_condition_source) {
 							this.addEdge(source,target,nextline[relationcol],
 									Utils.parseDouble(nextline[orcol]),
 									Utils.parseDouble(nextline[betacol]),
@@ -103,6 +104,24 @@ public class EdgeList {
 					}
 				}
 		    }
+		}
+		testSignificance();
+	}
+	
+	public void testSignificance() {
+		Edge direction1;
+		Edge direction2;
+		for (Node target : edges_by_relation_target_source.get(Consts.riskRelationName).keySet()) {
+			for (Node source : edges_by_relation_target_source.get(Consts.riskRelationName).get(target).keySet()) {
+				direction1=edges_by_relation_target_source.get(Consts.riskRelationName).get(target).get(source);
+				if (edges_by_relation_source_target.get(Consts.riskRelationName).containsKey(target) &&
+						edges_by_relation_source_target.get(Consts.riskRelationName).get(target).containsKey(source)) {
+					direction2=edges_by_relation_source_target.get(Consts.riskRelationName).get(target).get(source);
+					direction1.testSignificance(direction2);
+					direction2.testSignificance(direction1);
+				}
+				else direction1.testSignificance(direction1);
+			}
 		}
 	}
 	
@@ -134,7 +153,7 @@ public class EdgeList {
 		e.beta=beta;
 		e.number_relations=number_relations;
 		e.proportion_of_incidents_have_source=proportion_of_incidents_have_source;
-		e.proportion_source_get_incidents=mean_age_of_incident_patients_with_condition_source;
+		e.proportion_source_get_incidents=proportion_source_get_incidents;
 		e.mean_age_of_incident_patients_with_condition_source=mean_age_of_incident_patients_with_condition_source;
 	}
 	
@@ -175,12 +194,31 @@ public class EdgeList {
 		HashSet<Node> nodes = new HashSet<Node>();
 		
 		for (String rel: edges_by_relation_source_target.keySet()) {
-			nodes.addAll(edges_by_relation_source_target.get(rel).get(sourcenode).keySet());
+			if (edges_by_relation_source_target.get(rel).containsKey(sourcenode))
+				nodes.addAll(edges_by_relation_source_target.get(rel).get(sourcenode).keySet());
 		}
 		for (String rel: edges_by_relation_target_source.keySet()) {
-			nodes.addAll(edges_by_relation_target_source.get(rel).get(sourcenode).keySet());
+			if (edges_by_relation_target_source.get(rel).containsKey(sourcenode))
+				nodes.addAll(edges_by_relation_target_source.get(rel).get(sourcenode).keySet());
 		}
 		
+		nodes.remove(this.interceptnode);
+		
+		ArrayList<Node> nodes2 = new ArrayList<Node>(nodes);
+		
+		return nodes2;
+	}
+	
+	public ArrayList<Node> getConnectedNodes(Node sourcenode, String rel) {
+		HashSet<Node> nodes = new HashSet<Node>();
+		
+		if (edges_by_relation_source_target.get(rel).containsKey(sourcenode))
+			nodes.addAll(edges_by_relation_source_target.get(rel).get(sourcenode).keySet());
+		
+		if (edges_by_relation_target_source.get(rel).containsKey(sourcenode))
+			nodes.addAll(edges_by_relation_target_source.get(rel).get(sourcenode).keySet());
+		
+		nodes.remove(this.interceptnode);
 		ArrayList<Node> nodes2 = new ArrayList<Node>(nodes);
 		
 		return nodes2;
@@ -192,6 +230,12 @@ public class EdgeList {
 			if (edges_by_relation_target_source.get(rel).containsKey(target) && 
 					edges_by_relation_target_source.get(rel).get(target).containsKey(source)) return true;
 		}
+		return false;
+	}
+	
+	public boolean hasEdge (Node source, Node target, String rel) {
+			if (edges_by_relation_target_source.get(rel).containsKey(target) && 
+					edges_by_relation_target_source.get(rel).get(target).containsKey(source)) return true;
 		return false;
 	}
 	

@@ -2,7 +2,7 @@
 <header>
 <meta charset="utf-8">
 
-<title>Precision Medicine v0.9</title>
+<title>Precision Medicine v0.3</title>
 <style>
 
 @import url(index.css);
@@ -48,7 +48,7 @@
 <div class="abstand_ver"> </div>
 <div class="superheading">Risk predictions, powered by the Elsevier Medical Graph [DE Version]</div>
 <div class="mainpart">
-	<span class="heading">Patient health record, for the last 12 months</span>
+	<span class="heading">Patient health record</span>
 	<ul class = "container_row basic_container">		
 		<li class="container_item item0">Patient's age: <input type="number" id="AGE" value="65" min="0" max="124" /></li>
 		<li class="abstand_hor" />
@@ -58,12 +58,10 @@
 				<option value=2 selected>Male</option>
 			</select>
 		</li>
-		<li class="abstand_hor" />
-		<li class="container_item item0">Was hospitalized: <input type="checkbox" id="HOSP" value="true" /></li>
 	</ul>
 	<ul class="container_row selection_container">
 					<li class="container_item item2">
-						<div style="position: relative;"><b>Current diseases</b><div class="adder"><input type="button" class="button3" id="add_ICD" value="ADD" /></div></div>
+						<div style="position: relative;"><b>Current diseases</b>, <small>i.e. last 12 months</small> <div class="adder"><input type="button" class="button3" id="add_ICD" value="ADD" /></div></div>
 						<div>
 						<img class="container_image" src="img/doctor.png" align="top"/>
 							<select id="valuesICD" class="valueList" size="8" multiple></select>
@@ -71,7 +69,7 @@
 					</li>
 					<li class="abstand_hor" />
 					<li class="container_item item2">
-						<div style="position: relative;"><b>Current medications</b><div class="adder"><input type="button" class="button3" id="add_ATC" value="ADD" /></div></div>
+						<div style="position: relative;"><b>Current medications</b>, <small>i.e. last 12 months</small><div class="adder"><input type="button" class="button3" id="add_ATC" value="ADD" /></div></div>
 						<div>
 							<img class="container_image" src="img/pills.png" align="top" />
 							<select id="valuesATC" class="valueList" size="8" multiple></select>
@@ -102,20 +100,20 @@
 			<li><a href="#LIST">List view</a></li>
 			<li><a href="#GRAPH">Graph view</a></li>
 		</ul>
-		<div id="LIST" >
-		<div class="chart_list">By absolute risk <table class="list" id="chart_abs"></table></div>
-		<div class="chart_list">By relative risk <table class="list" id="chart_rel"></table></div>
+		<div id="LIST" class="charts" >
+		<div class="chart_list">By absolute risk <svg class="chart" id="chart_left"></svg></div>
+		<div class="chart_list">By relative risk <svg class="chart" id="chart_right"></svg></div>
 		</div>
-		<div id="GRAPH" class="risks" style="display: none;" ><svg class="risks" id="thegraph"></svg>
+		<div id="GRAPH" class="risks" style="display: none;" ><svg class="chart risks" id="thegraph"></svg>
 			<div id="nodeoverview" class="risks">
 				<div class="adder"><input type="button" class="button3" id="nodeoverviewX" value="X" /></div>
 				<div style="overflow: auto; height:430px;">
 					<b>Existing diseases:</b>
-					<ul id="nodeULEx1" class="nodeUL">
+					<ul id="nodeULEx1"class="nodeUL">
 						<!--<li class="nodeLI"><span></span></li>-->
 					</ul><br>
 					<b>Current medications:</b>
-					<ul id="nodeULEx2" class="nodeUL">
+					<ul id="nodeULEx2"class="nodeUL">
 						<!--<li class="nodeLI"><span></span></li>-->
 					</ul><br>
 					<b>Predicted diseases:</b>
@@ -141,7 +139,7 @@
 		<form id="view_form">
 		<table>
 		<td>Top risks to calculate: </td>
-		<td><label><input type="radio" name="topX" value="3" checked> 3</label> <label><input type="radio" name="topX" value="5"> 5</label> <label><input type="radio" name="topX" value="10"> 10</label> <label><input type="radio" name="topX" value="20"> 20</label></td>
+		<td><label><input type="radio" name="topX" value="5" checked> 5</label> <label><input type="radio" name="topX" value="10"> 10</label> <label><input type="radio" name="topX" value="20"> 20</label> <label><input type="radio" name="topX" value="50"> 50</label></td>
 		</tr></table>
 		 </form>
 		<hr>
@@ -177,15 +175,11 @@
 		<tr><td colspan=2><hr></td></tr>
 		<tr>
 			<td>Link depth:</td>
-			<td><label><input type="radio" name="linkdepth" value="ALL"> All</label> <label><input type="radio" name="linkdepth" value="DIRECT" checked> Direct only</label></td>
+			<td><label><input type="radio" name="linkdepth" value="ALL"> All</label><label><input type="radio" name="linkdepth" value="DIRECT" checked> Direct only</label></td>
 		</tr>
 		<tr>
 			<td>Link significance:</td>
-			<td><label><input type="radio" name="significance" value="ALL"> All</label> <label><input type="radio" name="significance" value="ONLY" checked> Significant only</label></td>
-		</tr>
-		<tr>
-			<td>Link influence:</td>
-			<td><label><input type="radio" name="influence" value="ALL"> All</label> <label><input type="radio" name="influence" value="ONLY" checked> Risk-increasing only</label></td>
+			<td><label><input type="radio" name="significance" value="ALL" checked> All</label><label><input type="radio" name="significance" value="ONLY"> Significant only</label></td>
 		</tr>
 		</table>
 		</form>	

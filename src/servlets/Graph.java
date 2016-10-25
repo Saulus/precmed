@@ -118,13 +118,26 @@ public class Graph extends HttpServlet {
 		doPost(request, response);
 	}
 	
-	private Double parseFeature(String feature) {
-		Double val;
+	private double parseFeature(String feature) {
+		double val;
 		try {
 			val = Double.parseDouble(feature);
 		} catch (Exception e) {
 			System.err.println("Can not parse feature: "+feature);
 			val=1.;
+		}
+		return val;
+	}
+	
+	private double parseFeatureBoolean(String feature) {
+		Boolean bool;
+		double val=0;
+		try {
+			bool = Boolean.parseBoolean(feature);
+			if (bool) val=1.;
+		} catch (Exception e) {
+			System.err.println("Can not parse feature: "+feature);
+			val=0;
 		}
 		return val;
 	}
@@ -198,7 +211,7 @@ public class Graph extends HttpServlet {
 							}
 							//HOSP
 							if (myrequest.HOSP != null) {
-								val = parseFeature(myrequest.HOSP);
+								val = parseFeatureBoolean(myrequest.HOSP);
 								features.put(nodes.getNode(Consts.hospattribute), val );
 							}
 							//atc

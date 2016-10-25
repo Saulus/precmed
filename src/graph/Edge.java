@@ -15,6 +15,7 @@ public class Edge {
 	public double proportion_of_incidents_have_source=0;
 	public double proportion_source_get_incidents=0;
 	public int mean_age_of_incident_patients_with_condition_source=0;
+	public boolean isSignificant = false;
 	
 	Edge(Node source, Node target, String relation) {
 		this.source=source;
@@ -24,6 +25,10 @@ public class Edge {
 	
 	public boolean isIntercept () {
 		return source.isIntercept();
+	}
+	
+	public void testSignificance(Edge mirroredEdge) {
+		isSignificant =(pvalue<0.05 && this.number_relations>=mirroredEdge.number_relations);  
 	}
 	
 

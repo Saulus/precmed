@@ -77,15 +77,22 @@ public class CreateResult {
 	    }
 	}
 	
+	class LabelComp implements Comparator<OnlineNode>{
+	    @Override
+	    public int compare(OnlineNode e1, OnlineNode e2) {
+	    	return e1.label.compareToIgnoreCase(e2.label);
+	    }
+	}
+	
 	
 	class LinkResult {
 		public int source;
 		public int target;
 		public double odds;
-		public double oddstransformed;
 		public double pvalue;
-		public double incidence;
+		public double proportion_source_get_incidents;
 		public double mean_age;
+		public boolean isSignificant;
 		public String typekey="";
 		public String typelabel;
 		
@@ -94,10 +101,10 @@ public class CreateResult {
 		
 		public void roundMe () {
 			odds = (double) Math.round(odds*1000000)/1000000;
-			oddstransformed = (double) Math.round(oddstransformed*10000)/10000;
-			if (pvalue != 0) pvalue = (double) Math.round(pvalue*1000)/1000;
+			if (pvalue != 0) pvalue = (double) Math.round(pvalue*10000)/10000;
 			//if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
 			if (mean_age != 0) mean_age = (double) Math.round(mean_age*10)/10;
+			if (proportion_source_get_incidents != 0) proportion_source_get_incidents = (double) Math.round(proportion_source_get_incidents*1000)/1000;
 		}
 	}
 	
@@ -218,6 +225,10 @@ public class CreateResult {
 						}
 					}
 				}
+				//sort Lists
+				for (OnlineNode risknode: other_relations.get(relation).keySet()) {
+					other_relations.get(relation).get(risknode).sort(new LabelComp());
+				}
 			}
 		}
 	}
@@ -271,9 +282,11 @@ public class CreateResult {
 		combresults.addAll(existing);
 		combresults.addAll(risks);
 		combresults.addAll(risks_relative);
+		//ToDo: Re-Include other relations
+		/*
 		for (String relation : other_relations.keySet())
 			for (List<OnlineNode>l : other_relations.get(relation).values())
-				combresults.addAll(l);
+				combresults.addAll(l);*/
 		
 		TreeNode nodetree = new TreeNode("NODES","Nodes");
 		nodetree.addAll(combresults);
@@ -295,15 +308,16 @@ public class CreateResult {
 			String source = ((OnlineNode) r1).key;
 			for (Object r2 : nodetree.getChildren()) {
 				String target = ((OnlineNode) r2).key;
-				if (edges.hasEdge(nodes.getNode(source), nodes.getNode(target))) {
+				if (edges.hasEdge(nodes.getNode(source), nodes.getNode(target),Consts.riskRelationName)) { //ToDo remove "Consts.riskRelationName" -> would re-include other relations
 					for (Edge e : edges.getEdges(nodes.getNode(source), nodes.getNode(target))) {
 						link = new LinkResult();
 						link.source=nodetree.getChildId(r1);
 						link.target=nodetree.getChildId(r2);
 						link.odds=e.or;
-						link.incidence=e.proportion_source_get_incidents;
+						link.proportion_source_get_incidents=e.proportion_source_get_incidents;
 						link.mean_age=e.mean_age_of_incident_patients_with_condition_source;
 						link.pvalue=e.pvalue;
+						link.isSignificant=e.isSignificant;
 						link.typekey=e.relation;
 						link.typelabel=clusterlabels.getLabel4Code(e.relation, english);
 						link.roundMe();
@@ -317,10 +331,14 @@ public class CreateResult {
 	
 	
 	public void calcSingleNodeList(String key, boolean english) {
-		ArrayList<Node> connectedNodes = edges.getConnectedNodes(nodes.getNode(key));
-
 		OnlineNode onlinenode;
-
+		
+		//first: single node
+		onlinenode = populateNode(nodes.getNode(key),true,english);
+		onlinenode.roundMe();
+		existing.add(onlinenode); 
+		
+		ArrayList<Node> connectedNodes = edges.getConnectedNodes(nodes.getNode(key), Consts.riskRelationName); //ToDo: remove Consts.riskRelationName -> includes all relations
 		//collect info for source-nodes (which cannot be targets as graph models are incident only)
 		for (Node node : connectedNodes) {
 			onlinenode = populateNode(node,false,english);

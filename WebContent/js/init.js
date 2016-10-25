@@ -1,5 +1,5 @@
-	var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
-	//var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
+	//var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
+	var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
 	
 	var graphhurl = ehealthurl + "explore.html"; //window.location.protocol + "//" + window.location.host +  "/graph/";
 	
@@ -13,7 +13,7 @@
 	var numberClusters=22;
 
 	var color = {
-	"ICD": d3.scale.ordinal().domain(["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX","XXI","XXII",""]).range(["#fff5f0","#fee0d2","#fcbba1","#fc9272","#fb6a4a","#ef3b2c","#cb181d","#fff5eb","#fee6ce","#fdd0a2","#fdae6b","#fd8d3c","#f16913"]),
+	"ICD": d3.scale.ordinal().domain(["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX","XXI","XXII",""]).range(["#999590","#999092","#999991","#999272","#996949","#993929","#991819","#999599","red","#999092","#999969","#998939","#916913"]),
 	"ATC": d3.scale.ordinal().domain(["","A","B","C","D","G","H","J","L","M","N","P","R","S","V"]).range(["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5"]),
 	"GEN": d3.scale.ordinal().domain(["SERIOUS","INPUT"]).range(["darkred","darkgrey"])
 	}

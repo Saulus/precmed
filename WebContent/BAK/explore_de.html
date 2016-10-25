@@ -2,7 +2,7 @@
 <header>
 <meta charset="utf-8">
 
-<title>Elsevier Medical Graph v0.9</title>
+<title>Elsevier Medical Graph v0.3</title>
 <style>
 
 @import url(index.css);
@@ -49,7 +49,7 @@
 <div class="abstand_ver"> </div>
 <div class="superheading">The Elsevier Medical Graph [DE Version]</div>
 <div class="mainpart">
-		<div id="GRAPH" class="explore"><svg class="explore" id="thegraph"></svg>
+		<div id="GRAPH" class="explore"><svg class="chart explore" id="thegraph"></svg>
 			<div id="nodeoverview" class="explore">
 				<div class="adder"><input type="button" class="button3" id="nodeoverviewX" value="X" /></div>
 				<div style="overflow: auto; height:720px;">
@@ -93,16 +93,12 @@
 		<tr><td colspan=2><hr></td></tr>
 		<tr>
 			<td>Link depth:</td>
-			<td><label><input type="radio" name="linkdepth" value="ALL"> All</label> <label><input type="radio" name="linkdepth" value="DIRECT" checked> Direct only</label>
+			<td><label><input type="radio" name="linkdepth" value="ALL"> All</label><label><input type="radio" name="linkdepth" value="DIRECT" checked> Direct only</label>
 			<!--<label><input type="radio" name="linkdepth" value="CONNECTED" checked> Connected only (2+)</label>--></td>
 		</tr>
 		<tr>
 			<td>Link significance:</td>
-			<td><label><input type="radio" name="significance" value="ALL"> All</label> <label><input type="radio" name="significance" value="ONLY" checked> Significant only</label></td>
-		</tr>
-		<tr>
-			<td>Link influence:</td>
-			<td><label><input type="radio" name="influence" value="ALL" checked> All</label> <label><input type="radio" name="influence" value="ONLY"> Risk-increasing only</label></td>
+			<td><label><input type="radio" name="significance" value="ALL"> All</label><label><input type="radio" name="significance" value="ONLY" checked> Significant only</label></td>
 		</tr>
 		</table>
 		</form>		

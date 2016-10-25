@@ -3,11 +3,11 @@
 //filter init
 var prevalence_min=0, prevalence_max=15;
 var age_min=0, age_max=99;
-var pvalue_max=0.05;
+//var pvalue_max=0.05;
 
 var linkDistance=100,
 	friction=0.4,
-	charge=-2000,
+	charge=-3000,
 	chargeDistance=300,
 	theta=0.9,
 	gravity=0.15;
@@ -15,10 +15,10 @@ var linkDistance=100,
 if (mode=="EXPLORE") {
 	linkDistance=100;
 	friction=0.5;
-	charge=-1000;
+	charge=-3000;
 	chargeDistance=300;
 	theta=0.9;
-	gravity=0.2;
+	gravity=0.15;
 }
 
 var ICDlist = [];
@@ -285,6 +285,10 @@ $("#GENDER").change(function () {
 	GO();
 });
 
+$("#HOSP").change(function () {
+	GO();
+});
+
 
 $("#import").click(function () {
 	$("#demo").val(demo_patient).change();
@@ -298,6 +302,7 @@ $("#demo").change(function () {
 		$.each(jsondata, function (key, value) {
 			if (key == "ICD") {addListToForm(value,"ICDlist","#valuesICD",false);}
 			else if (key == "ATC") {addListToForm(value,"ATClist","#valuesATC",false);}
+			else if (key == "HOSP") $('#HOSP').prop('checked',value);
 			else $("#"+key).val(value);
 		});
 		GO();
@@ -363,6 +368,10 @@ $("input[name=linkdepth]:radio").change(function () {
 });
 
 $("input[name=significance]:radio").change(function () {
+	drawGraphs(); 
+});
+
+$("input[name=influence]:radio").change(function () {
 	drawGraphs(); 
 });
 
@@ -465,6 +474,7 @@ function GO() {
 		postdata.ATC.push($(this).val());
 	});
 	postdata.COUNT_ATC = postdata.ATC.length;
+	postdata.HOSP = $('#HOSP').prop('checked');
 	refreshGraph(JSON.stringify(postdata));
 }
 
@@ -541,8 +551,10 @@ function reset() {
 		clearsearch("#optionsEXPLORE","#startEXPLORE","ALL");
 	}
 
-	
-	d3.selectAll(".chart > *").remove();
+	//remove all from graph
+	d3.selectAll("#thegraph > *").remove();
+	//and from table
+	d3.selectAll(".list > *").remove();
 	if ($("#nodeoverview").is(':visible')) $( "#nodeoverview" ).toggle( "slide" );
 	$('#shownodeoverview').prop('checked', false);
 	fillNodesLabelOverview();
@@ -743,7 +755,7 @@ function initLinks(mylinks,mynodes,existingLinks) {
 			// Set the range
 			var  v = d3.scale.linear().range([0, 100]);
 			// Scale the range of the data
-			v.domain([0, d3.max(mylinks, function(d) { return d.oddstransformed; })]);
+			v.domain([0, d3.max(mylinks, function(d) { return d.odds; })]);
 			
 			for (var i=0; i< mylinks.length; i++) {
 					if (mylinks[i].source.key) break; //objects already assigned
@@ -754,16 +766,16 @@ function initLinks(mylinks,mynodes,existingLinks) {
 					//test existing, and add if new
 					if (existingLinks) if (doesLinkExist(mylinks[i],existingLinks) == null) existingLinks.push(mylinks[i]);
 					// assign a opaType and directionType per value to encode opacity
-					if (v(mylinks[i].oddstransformed) <= 25) {
+					if (v(mylinks[i].odds) <= 25) {
 						mylinks[i].opaType = "twofive";
 						mylinks[i].linkStrength = 0.25;
-					} else if (v(mylinks[i].oddstransformed) <= 50 && v(mylinks[i].oddstransformed) > 25) {
+					} else if (v(mylinks[i].odds) <= 50 && v(mylinks[i].odds) > 25) {
 						mylinks[i].opaType = "fivezero";
 						mylinks[i].linkStrength = 0.5;
-					} else if (v(mylinks[i].oddstransformed) <= 75 && v(mylinks[i].oddstransformed) > 50) {
+					} else if (v(mylinks[i].odds) <= 75 && v(mylinks[i].odds) > 50) {
 						mylinks[i].opaType = "sevenfive";
 						mylinks[i].linkStrength = 0.75;
-					} else if (v(mylinks[i].oddstransformed) <= 100 && v(mylinks[i].oddstransformed) > 75) {
+					} else if (v(mylinks[i].odds) <= 100 && v(mylinks[i].odds) > 75) {
 						mylinks[i].opaType = "onezerozero";
 						mylinks[i].linkStrength = 1;
 					}
@@ -1143,9 +1155,14 @@ function resetFilter() {
 	
 	$('input[name=linkdepth]', '#config_form').filter('[value=DIRECT]').prop('checked', true);
 	
-	if (mode=="EXPLORE")
+	if (mode=="EXPLORE") {
 		$('input[name=significance]', '#config_form').filter('[value=ONLY]').prop('checked', true);
-	else $('input[name=significance]', '#config_form').filter('[value=ALL]').prop('checked', true);
+		$('input[name=influence]', '#config_form').filter('[value=ALL]').prop('checked', true);
+	}
+	else {
+		$('input[name=significance]', '#config_form').filter('[value=ONLY]').prop('checked', true);
+		$('input[name=influence]', '#config_form').filter('[value=ONLY]').prop('checked', true);
+	}
 	
 	filtercriteria = {};
 
@@ -1180,12 +1197,14 @@ function toBeFilteredOut(node) {
 function showLink(link,exploreMode,focusedOnly) {
 	var modus= $('input[name=linkdepth]:checked', '#config_form').val();
 	var modus_sign= $('input[name=significance]:checked', '#config_form').val();
+	var modus_infl= $('input[name=influence]:checked', '#config_form').val();
 	var isfine = true;
 	if (exploreMode) {
 		if (focusedOnly && modus != "ALL") 
 			isfine = (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
 		else isfine=true;
-		if (modus_sign != "ALL") isfine=isfine && (link.pvalue<=pvalue_max);
+		if (modus_sign != "ALL") isfine=isfine && link.isSignificant;
+		if (modus_infl != "ALL") isfine=isfine && (link.directionType != "lowers");
 		return isfine;
 	} else {
 		var isfine = true;
@@ -1193,7 +1212,8 @@ function showLink(link,exploreMode,focusedOnly) {
 			isfine = (!link.source.istarget && link.target.istarget);
 		if (focusedOnly) 
 			isfine = isfine && (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
-		if (modus_sign != "ALL") isfine=isfine && (link.pvalue<=pvalue_max);
+		if (modus_sign != "ALL") isfine=isfine && link.isSignificant;
+		if (modus_infl != "ALL") isfine=isfine && (link.directionType != "lowers");
 		return isfine ;
 	}
 	
@@ -1259,38 +1279,44 @@ function getRiskNode (node) {
 function getFullLabelText(array,type) {
 	info=getChildren(array,type);
 	if (info==null) return "";
-	text="";
+	text="<ul class=tableUL>";
 	for (i=0; i<info.length; i++) {
 		if (!info[i].isnew) 
-			text = text + "<b>"+info[i].label+"</b>, ";
-		else text = text +""+info[i].label+", ";
+			text = text + "<li><b>"+info[i].label+"</b></li>";
+		else text = text +"<li>"+info[i].label+"</li>";
 	}
-	if (text!="")
-		text='<div class="labellist_div">'+text+"</div>";
+	text=text+"</ul>";
 	return text;
 }
 
 var columns = [
     { head_en: 'Disease', head_de: 'Erkrankung', basecl: 'listtable disease',
-      html: function(row) { return row.label; } },
+      html: function(row) { return row.label; }, 
+	  needs_div: false },
 	  
 	{ head_en: 'Group', head_de: 'Gruppe', basecl: 'listtable group',
-      html: function(row) { info=getRiskNode(row); return info.clusterlabel; } },
+      html: function(row) { info=getRiskNode(row); return "<FONT COLOR="+color[info.typekey](info.clusterkey)+">"+info.clusterlabel+"</font>"; }, 
+	  needs_div: false },
 	  
     { head_en: 'Risk (abs/rel)', head_de: 'Risiko (abs/rel)', basecl: 'listtable risk',
-      html: function(row) { info=getRiskNode(row); return round(info.risk*100,0) + "% / " + round(info.rrisk,1); } },
+      html: function(row) { info=getRiskNode(row); return round(info.risk*100,0) + "% / " + round(info.rrisk,1); }, 
+	  needs_div: false },
 	  
     { head_en: 'Prevalence / Incidence', head_de: 'Prävalenz / Incidenz', basecl: 'listtable prevalence',
-      html: function(row) { info=getRiskNode(row); return round(info.prevalence*100,1) + "% / " + round(info.incidence*100,1) +"% (at " + info.mean_age + ")"; } },
+      html: function(row) { info=getRiskNode(row); return round(info.prevalence*100,1) + "% / " + round(info.incidence*100,1) +"% (at " + info.mean_age + ")"; }, 
+	  needs_div: false },
 	  
     { head_en: 'Risk Factors ', head_de: 'Risikofaktoren', basecl: 'listtable factors',
-      html: function(row) { return getFullLabelText(row,"has_risk_factor"); } },
+      html: function(row) { return getFullLabelText(row,"has_risk_factor");  }, 
+	  needs_div: true },
 	  
     { head_en: 'Diagnostic Procedures', head_de: 'Diagnostik', basecl: 'listtable diagnostics',
-		html: function(row) { return getFullLabelText(row,"has_diagnostic_procedure"); } },
+		html: function(row) { return getFullLabelText(row,"has_diagnostic_procedure"); }, 
+	  needs_div: true },
 		
 	{ head_en: 'Prevention', head_de: 'Prävention', basecl: 'listtable prevention',
-      html: function(row) { return getFullLabelText(row,"has_prevention"); } }
+      html: function(row) { return getFullLabelText(row,"has_prevention"); }, 
+	  needs_div: true }
 ];
 
 function drawListGraph(type_pos,chartid) {
@@ -1335,6 +1361,10 @@ function drawListGraph(type_pos,chartid) {
 			if (i%2 == 0) return "row_0";
 			else return "row_1";
 		})
+		/*.attr('bgcolor', function(row) { 
+				d=getRiskNode(row);
+				return color[d.typekey](d.clusterkey);
+		})*/
 		/*.on("mousemove", mousemoveTooltipNode)
           .on("mouseout", mouseoutTooltip)*/
 		  .on("dblclick", function(node){
@@ -1349,7 +1379,7 @@ function drawListGraph(type_pos,chartid) {
                 setTimeout(function(){
                     if (nodeClickInProgress) { 
                         nodeClickInProgress = false;
-                        switch2graph(d);
+                        switch2graph(getRiskNode(d));
                     }
 				},200); 
 			}
@@ -1366,8 +1396,14 @@ function drawListGraph(type_pos,chartid) {
 		   });
 		}).enter()
 		.append('td')
-		.html(function(col) {return col.html})
 		.attr('class', function(col) {return col.basecl})
+		.on("mousemove", mousemoveTooltipListCell)
+          .on("mouseout", mouseoutTooltip)
+		 .html(function(col) {
+			 text = col.html;
+			 if (col.needs_div)
+				text='<div class="labellist_div">'+text+"</div>";
+			 return text})
 		;
 			  
 }
@@ -1420,8 +1456,7 @@ function wrap(text) {
  }
 	  
  //TOOLTIP functions
- 	var mousemoveTooltipNode = function(node) {
-		d= getRiskNode(node); 
+ 	var mousemoveTooltipNode = function(d) {
 	  var mytext="";
 	  if (d.label) mytext=d.label; else mytext=d.key;
 	   if (!d.istarget && !d.children && mode=="RISKS") mytext=mytext + " (existing)";
@@ -1465,9 +1500,9 @@ function wrap(text) {
 				d3.select("#tooltip #t_relrisk")
 				.text(null);
 			}
-		  d3.select("#tooltip #t_prev")
-			.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
 			if (d.typekey == "ICD") {
+				d3.select("#tooltip #t_prev")
+				.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
 			  d3.select("#tooltip #t_inc")
 				.html("<td>Incidence:</td><td>" + round(d.incidence * 100,1)+ "%"+"</td>");
 			  d3.select("#tooltip #t_mean_age")
@@ -1475,6 +1510,12 @@ function wrap(text) {
 			  d3.select("#tooltip #t_link")
 				.html("<td colspan=2>Double-click for ClinicalKey Content</td>");
 			} else {
+				if (d.typekey == "ATC" || d.key == "HOSP")
+					d3.select("#tooltip #t_prev")
+						.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
+				else 
+					d3.select("#tooltip #t_prev")
+						.html("<td>Prevalence:</td><td>" + round(d.prevalence,1)+"</td>");
 				d3.select("#tooltip #t_inc")
 				.text(null);
 				d3.select("#tooltip #t_mean_age")
@@ -1501,8 +1542,7 @@ function wrap(text) {
 	};
 	
 	var mousemoveTooltipLink = function(d) {
-	 if (d.pvalue<=pvalue_max) significant = true;
-	 else significant = false;
+	 significant = d.isSignificant;;
 	 if (significant)
 		 sig_str=" *";
 	 else sig_str="";
@@ -1519,13 +1559,49 @@ function wrap(text) {
 		  d3.select("#tooltip #t_prev")
 			.text(null);
 		 d3.select("#tooltip #t_inc")
-			.html("<td>Incidence:</td><td>" + round(d.incidence* 100,2)+"%"+"</td>");
+			.html("<td>Incidence:</td><td>" + round(d.proportion_source_get_incidents* 100,2)+"%"+"</td>");
 		  d3.select("#tooltip #t_mean_age")
 			.html("<td>Mean age:</td><td>" + d.mean_age+"</td>");
 		if (significant)
 		  d3.select("#tooltip #t_link")
 			.html("<td colspan=2>* significant correlation</td>");
 		else 
+			d3.select("#tooltip #t_link")
+			.text(null);
+			
+		var xPosition = d3.event.clientX + 5;
+	  var yPosition = d3.event.clientY + 5;
+	  
+	  var xMax = window.innerWidth, //document.documentElement.clientWidth,
+	  yMax=window.innerHeight; // document.documentElement.clientHeight;
+
+	  if (xPosition + $("#tooltip").width() > xMax ) xPosition=xMax -$("#tooltip").width()+15;
+	  if (yPosition + $("#tooltip").height() > yMax) yPosition=yMax-$("#tooltip").height()-15;
+
+	  d3.select("#tooltip")
+		.style("left", xPosition + "px")
+		.style("top", yPosition + "px");
+		 d3.select("#tooltip").classed("hidden", false);
+	};
+	
+	
+	var mousemoveTooltipListCell = function(col) {
+	  d3.select("#tooltip #t_heading")
+		.text(col.head_en);
+	  d3.select("#tooltip #t_type")
+			.html(col.html);
+		d3.select("#tooltip #t_cluster")
+			.text(null);
+		d3.select("#tooltip #t_absrisk")
+			.text(null);
+		  d3.select("#tooltip #t_relrisk")
+			.text(null);
+		  d3.select("#tooltip #t_prev")
+			.text(null);
+		 d3.select("#tooltip #t_inc")
+			.text(null);
+		  d3.select("#tooltip #t_mean_age")
+			.text(null);
 			d3.select("#tooltip #t_link")
 			.text(null);
 			

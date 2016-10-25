@@ -1,4 +1,7 @@
+@import url("normalize.css");
+
 html, body {
+margin-top: 2px;
 background-color: #eee;
 font-size: 16px;
 }
@@ -200,7 +203,7 @@ background-color:rgba(251,251,251,0.9);
 
 .adder {
 	font-weight: bold;
-	font-size: 0.6em;
+	font-size: 0.7em;
 	position: absolute;
 	top: 2px;
 	right: 2px;
@@ -209,7 +212,7 @@ background-color:rgba(251,251,251,0.9);
 
 .adderBottom {
 	font-weight: bold;
-	font-size: 0.6em;
+	font-size: 0.7em;
 	position: absolute;
 	bottom: 5px;
 	right: 2px;
@@ -219,7 +222,7 @@ background-color:rgba(251,251,251,0.9);
 
 .adderBottomLeft {
 	font-weight: bold;
-	font-size: 0.6em;
+	font-size: 0.7em;
 	position: absolute;
 	bottom: 5px;
 	left: 2px;
@@ -319,6 +322,7 @@ background: #ddd;
 
 .valueList {
 	width: 450px;
+	font-size: 14px;
 }
 
 .valueList_big {
@@ -338,7 +342,7 @@ border:1px solid #ccc;}
 padding:0;
 margin: auto;
   list-style: none;
-   height: 530px; 
+   height: 550px; 
    width: 1050px;
   
   
@@ -362,7 +366,7 @@ padding:0;
 margin: auto;
 	width: 100%;
 	font-size: 1em;
-	height: 250px; 
+	height: 260px; 
 	
 	color: black;
   font-weight: bold; 
@@ -448,7 +452,12 @@ vertical-align:top;
 
 .prevention{
 	width: 16%;
+}
 
+.tableUL {
+	
+    padding-left: 10px;
+    margin: 0;
 }
 
 /*
@@ -536,7 +545,7 @@ text {
   position: fixed;
   width: 240px;
   height: auto;
-  padding: 10px;
+  padding: 5px;
   background-color:rgb(238,238,238);
  
   -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
@@ -565,11 +574,11 @@ path.link {
   stroke-width: 1.5px;
 }
 
-path.link.ODDS.lowers {
+path.link.has_successor.lowers {
   stroke: darkgreen;
 }
 
-path.link.ODDS.increases {
+path.link.has_successor.increases {
   stroke: darkred;
 }
 
