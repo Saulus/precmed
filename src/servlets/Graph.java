@@ -2,6 +2,7 @@ package servlets;
 
 import configuration.*;
 import graph.CreateResult;
+import graph.CreateResultDummy;
 import graph.EdgeList;
 import graph.Node;
 import graph.NodeList;
@@ -212,7 +213,7 @@ public class Graph extends HttpServlet {
 							//HOSP
 							if (myrequest.HOSP != null) {
 								val = parseFeatureBoolean(myrequest.HOSP);
-								features.put(nodes.getNode(Consts.hospattribute), val );
+								if (val>0) features.put(nodes.getNode(Consts.hospattribute), val );
 							}
 							//atc
 							for (int i=0; i<myrequest.ATC.length; i++) {
@@ -229,8 +230,10 @@ public class Graph extends HttpServlet {
 					res.createNodes(features,baseriskfeatures,english,topX);
 					
 					TreeNode result = new TreeNode("ROOT","Risks");
-					result.add(res.graphNode(english));
-					result.add(res.listNode(english));
+					TreeNode graphnode=res.graphNode(english);
+					TreeNode listnode=res.listNode(english);
+					result.add(graphnode.key,graphnode);
+					result.add(listnode.key,listnode);
 					String myresponse=gson.toJson(result);
 					
 					response.getWriter().append(myresponse);

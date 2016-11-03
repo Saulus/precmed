@@ -342,7 +342,7 @@ border:1px solid #ccc;}
 padding:0;
 margin: auto;
   list-style: none;
-   height: 550px; 
+   height: 530px; 
    width: 1050px;
   
   
@@ -366,7 +366,7 @@ padding:0;
 margin: auto;
 	width: 100%;
 	font-size: 1em;
-	height: 260px; 
+	height: 256px; 
 	
 	color: black;
   font-weight: bold; 
@@ -459,6 +459,34 @@ vertical-align:top;
     padding-left: 10px;
     margin: 0;
 }
+
+.tableUL.multicolumn2 {
+  -moz-column-count: 2;
+    -moz-column-gap: 20px;
+    -webkit-column-count: 2;
+    -webkit-column-gap: 20px;
+    column-count: 2;
+    column-gap: 20px;
+
+	
+}
+.tableUL.multicolumn3 {
+  -moz-column-count: 3;
+    -moz-column-gap: 20px;
+    -webkit-column-count: 3;
+    -webkit-column-gap: 20px;
+    column-count: 3;
+    column-gap: 20px;
+}
+.tableUL.multicolumn4 {
+  -moz-column-count: 4;
+    -moz-column-gap: 20px;
+    -webkit-column-count: 4;
+    -webkit-column-gap: 20px;
+    column-count: 4;
+    column-gap: 20px;
+}
+
 
 /*
 .labellist {
@@ -582,25 +610,27 @@ path.link.has_successor.increases {
   stroke: darkred;
 }
 
-path.link.twofive {
-  opacity: 0.4;
+path.link.weakest {
+  opacity: 0.2;
 }
 
-path.link.fivezero {
-  opacity: 0.60;
+path.link.weak {
+  opacity: 0.40;
 }
 
-path.link.sevenfive {
-  opacity: 0.8;
+path.link.strong {
+  opacity: 0.6;
 }
 
-path.link.onezerozero {
+path.link.strongest {
   opacity: 1.0;
 }
+
 
 .node {
   stroke: #fff;
   stroke-width: 1.5px;
+  pointer-events: all;
 }
 
 .node.SELECTED {

@@ -209,7 +209,7 @@ public class EdgeList {
 		return nodes2;
 	}
 	
-	public ArrayList<Node> getConnectedNodes(Node sourcenode, String rel) {
+	public HashSet<Node> getConnectedNodes(Node sourcenode, String rel) {
 		HashSet<Node> nodes = new HashSet<Node>();
 		
 		if (edges_by_relation_source_target.get(rel).containsKey(sourcenode))
@@ -219,9 +219,9 @@ public class EdgeList {
 			nodes.addAll(edges_by_relation_target_source.get(rel).get(sourcenode).keySet());
 		
 		nodes.remove(this.interceptnode);
-		ArrayList<Node> nodes2 = new ArrayList<Node>(nodes);
 		
-		return nodes2;
+		return nodes;
+		
 	}
 	
 	

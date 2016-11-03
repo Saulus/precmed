@@ -13,9 +13,9 @@
 	var numberClusters=22;
 
 	var color = {
-	"ICD": d3.scale.ordinal().domain(["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX","XXI","XXII",""]).range(["#999590","#999092","#999991","#999272","#996949","#993929","#991819","#999599","red","#999092","#999969","#998939","#916913"]),
-	"ATC": d3.scale.ordinal().domain(["","A","B","C","D","G","H","J","L","M","N","P","R","S","V"]).range(["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5"]),
-	"GEN": d3.scale.ordinal().domain(["SERIOUS","INPUT"]).range(["darkred","darkgrey"])
+	"ICD": d3.scaleOrdinal().domain(["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX","XXI","XXII",""]).range(["#999590","#999092","#999991","#999272","#996949","#993929","#991819","#999599","red","#999092","#999969","#998939","#916913"]),
+	"ATC": d3.scaleOrdinal().domain(["","A","B","C","D","G","H","J","L","M","N","P","R","S","V"]).range(["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5"]),
+	"GEN": d3.scaleOrdinal().domain(["SERIOUS","INPUT"]).range(["darkred","darkgrey"])
 	}
 
 	
@@ -24,10 +24,10 @@
 	"MED": d3.scale.ordinal().domain(["","5","0","1","4","3","2"]).range(["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5"])
 	}*/
 	var colorNodes = {
-	  "ICD": d3.scale.ordinal().domain(["OLD","NEW"]).range(["#ffaaaa","#990000"]),
-	  "ATC": d3.scale.ordinal().domain(["OLD","NEW"]).range(["#aaddff","#0033cc"]),
-	  "GEN": d3.scale.ordinal().domain(["OLD","NEW"]).range(["#aaa","#000"]),
-	  "": d3.scale.ordinal().domain(["OLD","NEW"]).range(["#aaa","#000"])
+	  "ICD": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#ffaaaa","#990000"]),
+	  "ATC": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#aaddff","#0033cc"]),
+	  "GEN": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#aaa","#000"]),
+	  "": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#aaa","#000"])
 	}
 	
     //.range(["#E14705","#F87301","#F87301", "#ED5F03", "#E14705","#F87301", "#ED5F03", "#E14705"]);

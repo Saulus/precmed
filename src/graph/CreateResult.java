@@ -17,14 +17,14 @@ import lists.NodeLabels;
  * Interface class
  */
 public class CreateResult {
-	private NodeLabels nodelabels; 
-	private ClusterLabels clusterlabels; 
-	private EdgeList edges;
-	private NodeList nodes;
+	protected NodeLabels nodelabels; 
+	protected ClusterLabels clusterlabels; 
+	protected EdgeList edges;
+	protected NodeList nodes;
 	
-	List<OnlineNode> existing = new ArrayList<OnlineNode>();
-	List<OnlineNode> risks = new ArrayList<OnlineNode>();
-	List<OnlineNode> risks_relative = new ArrayList<OnlineNode>();
+	protected List<OnlineNode> existing = new ArrayList<OnlineNode>();
+	protected List<OnlineNode> risks = new ArrayList<OnlineNode>();
+	protected List<OnlineNode> risks_relative = new ArrayList<OnlineNode>();
 	
 	HashMap<String,HashMap<OnlineNode,List<OnlineNode>>> other_relations = new HashMap<String,HashMap<OnlineNode,List<OnlineNode>>>();
 	
@@ -86,9 +86,10 @@ public class CreateResult {
 	
 	
 	class LinkResult {
-		public int source;
-		public int target;
+		public String source;
+		public String target;
 		public double odds;
+		public double beta;
 		public double pvalue;
 		public double proportion_source_get_incidents;
 		public double mean_age;
@@ -101,6 +102,7 @@ public class CreateResult {
 		
 		public void roundMe () {
 			odds = (double) Math.round(odds*1000000)/1000000;
+			beta = (double) Math.round(beta*10000)/10000;
 			if (pvalue != 0) pvalue = (double) Math.round(pvalue*10000)/10000;
 			//if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
 			if (mean_age != 0) mean_age = (double) Math.round(mean_age*10)/10;
@@ -117,7 +119,7 @@ public class CreateResult {
 	}
 	
 	
-	private void addRisks2Result (HashMap<Node,Double> features, Node targetnode, OnlineNode targetresult) {
+	protected void addRisks2Result (HashMap<Node,Double> features, Node targetnode, OnlineNode targetresult) {
 		targetresult.risk=this.edges.getRisk4Target(targetnode, features);
 		if (targetresult.risk < 0.01) targetresult.risk = 0; //basically: exclude risks <1%
 		else {
@@ -129,7 +131,7 @@ public class CreateResult {
 	}
 
 	
-	private OnlineNode populateNode (Node node, boolean istarget, boolean english) {
+	protected OnlineNode populateNode (Node node, boolean istarget, boolean english) {
 		OnlineNode result = new OnlineNode();
 		result.key=node.getCode();
 		result.prevalence=node.getPrevalence();
@@ -245,8 +247,8 @@ public class CreateResult {
 			rel = new TreeNode("REL","Relativ");
 			abs = new TreeNode("ABS","Absolut");
 		}
-		newresult.add(rel);
-		newresult.add(abs);
+		newresult.add(rel.key,rel);
+		newresult.add(abs.key,abs);
 		//has_successor
 		
 		unravelRiskNodes(rel,risks_relative,english);
@@ -254,22 +256,22 @@ public class CreateResult {
 		return newresult;
 	}
 	
-	private void unravelRiskNodes (TreeNode root, List<OnlineNode> risklist, boolean english) {
+	protected void unravelRiskNodes (TreeNode root, List<OnlineNode> risklist, boolean english) {
 		TreeNode node ;
 		TreeNode subnode_risks;
 		TreeNode subnode_other;
 		for (OnlineNode risk: risklist) {
 			node = new TreeNode(risk.key,risk.label);
 			subnode_risks = new TreeNode(Consts.riskRelationName,clusterlabels.getLabel4Code(Consts.riskRelationName, english));
-			subnode_risks.add(risk);
-			node.add(subnode_risks);
+			subnode_risks.add(risk.key,risk);
+			node.add(subnode_risks.key,subnode_risks);
 			
 			for (String relation : other_relations.keySet()) {
 				subnode_other= new TreeNode(relation,clusterlabels.getLabel4Code(relation, english));
-				subnode_other.addAll(other_relations.get(relation).get(risk));
-				node.add(subnode_other);
+				subnode_other.addAll(other_relations.get(relation).get(risk),false);
+				node.add(subnode_other.key,subnode_other);
 			}
-			root.add(node);
+			root.add(node.key,node);
 		}
 	}
 	
@@ -289,12 +291,12 @@ public class CreateResult {
 				combresults.addAll(l);*/
 		
 		TreeNode nodetree = new TreeNode("NODES","Nodes");
-		nodetree.addAll(combresults);
-		newresult.add(nodetree);
+		nodetree.addAll(combresults,true);
+		newresult.add(nodetree.key,nodetree);
 				
 		//add links
 		TreeNode linktree = constructTreeLinks(nodetree,"LINKS","Links",english);
-		newresult.add(linktree);
+		newresult.add(linktree.key,linktree);
 		
 		return newresult;
 	}
@@ -304,16 +306,15 @@ public class CreateResult {
 		TreeNode newlinks = new TreeNode(typekey,typelabel); 
 		//now links -> for all nodes (with each other)
 		LinkResult link;
-		for (Object r1 : nodetree.getChildren()) {
-			String source = ((OnlineNode) r1).key;
-			for (Object r2 : nodetree.getChildren()) {
-				String target = ((OnlineNode) r2).key;
+		for (String source : nodetree.getChildrenKeys()) {
+			for (String target : nodetree.getChildrenKeys()) {
 				if (edges.hasEdge(nodes.getNode(source), nodes.getNode(target),Consts.riskRelationName)) { //ToDo remove "Consts.riskRelationName" -> would re-include other relations
 					for (Edge e : edges.getEdges(nodes.getNode(source), nodes.getNode(target))) {
 						link = new LinkResult();
-						link.source=nodetree.getChildId(r1);
-						link.target=nodetree.getChildId(r2);
+						link.source=source;
+						link.target=target;
 						link.odds=e.or;
+						link.beta=e.beta;
 						link.proportion_source_get_incidents=e.proportion_source_get_incidents;
 						link.mean_age=e.mean_age_of_incident_patients_with_condition_source;
 						link.pvalue=e.pvalue;
@@ -321,7 +322,7 @@ public class CreateResult {
 						link.typekey=e.relation;
 						link.typelabel=clusterlabels.getLabel4Code(e.relation, english);
 						link.roundMe();
-						newlinks.add(link);
+						newlinks.add(source.concat(target),link);
 					}
 				}
 			}
@@ -338,7 +339,7 @@ public class CreateResult {
 		onlinenode.roundMe();
 		existing.add(onlinenode); 
 		
-		ArrayList<Node> connectedNodes = edges.getConnectedNodes(nodes.getNode(key), Consts.riskRelationName); //ToDo: remove Consts.riskRelationName -> includes all relations
+		HashSet<Node> connectedNodes = edges.getConnectedNodes(nodes.getNode(key), Consts.riskRelationName); //ToDo: remove Consts.riskRelationName -> includes all relations
 		//collect info for source-nodes (which cannot be targets as graph models are incident only)
 		for (Node node : connectedNodes) {
 			onlinenode = populateNode(node,false,english);
@@ -352,11 +353,11 @@ public class CreateResult {
 	public TreeNode singleNode(boolean english) {
 		TreeNode newresult = new TreeNode("GRAPH","Graph");
 		TreeNode nodetree = new TreeNode("NODES","Nodes");
-		nodetree.addAll(existing);
-		newresult.add(nodetree);
+		nodetree.addAll(existing,true);
+		newresult.add(nodetree.key,nodetree);
 
 		TreeNode linktree = constructTreeLinks(nodetree,"LINKS","Links",english);
-		newresult.add(linktree);
+		newresult.add(linktree.key,linktree);
 		
 		return newresult;
 	}

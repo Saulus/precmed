@@ -6,33 +6,39 @@ var age_min=0, age_max=99;
 //var pvalue_max=0.05;
 
 var linkDistance=100,
-	friction=0.4,
-	charge=-3000,
 	chargeDistance=300,
+	friction=0.5,
+	charge=-1000,
 	theta=0.9,
-	gravity=0.15;
+	alpha=0.3;
 
 if (mode=="EXPLORE") {
 	linkDistance=100;
 	friction=0.5;
-	charge=-3000;
+	charge=-1000;
 	chargeDistance=300;
-	theta=0.9;
-	gravity=0.15;
+	theta=0.9,
+	alpha=0.1;
 }
+
+var simulation = d3.forceSimulation();
+
+//shim Object.values
+Object.values = Object.values || (obj => Object.keys(obj).map(key => obj[key]));
 
 var ICDlist = [];
 var ATClist = [];
 
 var graphdata = null;
-var graphnodes = [],
-	graphlinks = [],
-	nodes = [],
-	links = [],
+var graphnodes = {},
+	graphlinks = {},
+	nodes = {},
+	links = {},
 	nodeClickInProgress=false;
 var listtree = null;
 	
 var filtercriteria = {}; //single Criteria: variable: "nodevar", min: 0, max: 100
+var linkmode = {};
 
 var number_focused = 0;
 
@@ -70,7 +76,7 @@ function load(loader,form) {
 	$(form).find('option').remove();
 	
 	for (var v = 0; v < myvar.length; v++) {
-		if (window[myvar[v]].length == 0) getfromurl(myurl[v],myvar[v],form,intsort[v]);
+		if (window[myvar[v]].length == 0) getfromurl(myurl[v],myvar[v],form,intsort[v]); //json getter is asychnron
 		else {
 			for (var i = 0; i < window[myvar[v]].length; i++) {
 				$(form).append('<option value=' + window[myvar[v]][i].key + ' title="' + window[myvar[v]][i].value.label + '">' + window[myvar[v]][i].value.label + '</option>');
@@ -316,6 +322,7 @@ $("#reset").click(function () {
 
 $("#resetView").click(function () {
 	resetFilter();
+	resetSimulation();
 	if (mode=="RISKS") {
 		selectNodesAndLinksRiskMode();
 	} else {
@@ -557,16 +564,17 @@ function reset() {
 	d3.selectAll(".list > *").remove();
 	if ($("#nodeoverview").is(':visible')) $( "#nodeoverview" ).toggle( "slide" );
 	$('#shownodeoverview').prop('checked', false);
-	fillNodesLabelOverview();
+	$('.nodeUL').empty();
 	
 	
 	resetFilter();
+	resetSimulation();
 	
 	graphdata=null;
-	graphnodes = [];
-	graphlinks = [];
-	nodes = [];
-	links = [];
+	graphnodes = {};
+	graphlinks = {};
+	nodes = {};
+	links = {};
 	nodeClickInProgress=false;
 	listtree = null;
 	number_focused=0;
@@ -574,6 +582,15 @@ function reset() {
 	//$("#demo").val(0);
 	//$("#ALTER").val(40);
 }
+
+function resetSimulation() {
+	simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d; }).distance(linkDistance).strength(function(d){return d.linkStrength}))
+    .force("charge", d3.forceManyBody().strength(charge).theta(theta).distanceMax(chargeDistance))
+    .force("center", d3.forceCenter($("#thegraph").width() / 2, $("#thegraph").height() / 2));
+	//.velocityDecay(friction);
+}
+
 
 function clearitem(form) {
 	var selectedItem = $(form+" option:selected");
@@ -704,17 +721,20 @@ function refreshGraphSingle(key) {
 	});
 }
 
-function initNodes(mynodes,key) {
+function initNodes(mynodes,focuskey) {
 	//init Nodes:
 			//isCurrentlyFocused and hideNode and fixed and position
-			var n = mynodes.length,
-				width= $("#thegraph").width();
-				height= $("#thegraph").height()
-			for (var k=0; k< n; k++) {
-				mynodes[k].isCurrentlyFocused=false;		
-				if (key != null && mynodes[k].key == key ) mynodes[k].isCurrentlyFocused=true;		
-				mynodes[k].hideNode=false;
-				mynodes[k].fixed = false;
+			var n = Object.keys(mynodes).length,
+				width= $("#thegraph").width(),
+				height= $("#thegraph").height(),
+				k=1;
+			Object.keys(mynodes).forEach(function (key) {
+				mynodes[key].isCurrentlyFocused=false;		
+				if (focuskey != null && key == focuskey ) mynodes[key].isCurrentlyFocused=true;		
+				mynodes[key].hideNode=false;
+				mynodes[key].fixed = false;
+				mynodes[key].fx=null;
+				mynodes[key].fy=null;
 				//order on screen by cluster -> not working for too many and/or unsorted clusters
 				//mynodes[k].x = Math.cos((mynodes[k].clusterkey+1) / numberClusters * 2 * Math.PI) * 200 + width / 2 + (Math.random()*10);
 				//mynodes[k].y = Math.sin((mynodes[k].clusterkey+1) / numberClusters * 2 * Math.PI) * 200 + height / 2 + (Math.random()*10);
@@ -725,15 +745,18 @@ function initNodes(mynodes,key) {
 				
 				//order by istarget: old left, new right
 				
-				if (mynodes[k].istarget) {
-					mynodes[k].x = width * 0.7;
-					mynodes[k].y = height / n * k;
+				if (mynodes[key].istarget) {
+					mynodes[key].x = width * 0.7;
+					mynodes[key].y = height / n * k;
 				} else {
-					mynodes[k].x = width * 0.3;
-					mynodes[k].y = height / n * k;
+					mynodes[key].x = width * 0.3;
+					mynodes[key].y = height / n * k;
 				}
-				//console.log(mynodes[k].key + " " +mynodes[k].clusterkey + " " + mynodes[k].x + " " + mynodes[k].y);
-			}
+				k += 1;
+				//console.log(mynodes[key].key + " " +mynodes[key].clusterkey + " " + mynodes[key].x + " " + mynodes[key].y);
+				
+				mynodes[key].radius=nodeminradius;
+			});
 			
 			//init radius for prevalence
 			//v = d3.scale.linear().range([nodeminradius, nodemaxradius]);
@@ -748,94 +771,81 @@ function initNodes(mynodes,key) {
 
 function initLinks(mylinks,mynodes,existingLinks) {
 	//existingLinks: only if links shall be added (if new), otherwise leave this null
+	var existingLinksOld = jQuery.extend({}, existingLinks);
 	//Init Links
 			//...assign node objects to links (instead of array pos)
 			//...init scale for opacity
 			//..init linkStrength
 			// Set the range
-			var  v = d3.scale.linear().range([0, 100]);
+			//var  v = d3.scaleLinear().range([0, 100]);
 			// Scale the range of the data
-			v.domain([0, d3.max(mylinks, function(d) { return d.odds; })]);
+			//v.domain([-5, 5]);
 			
-			for (var i=0; i< mylinks.length; i++) {
-					if (mylinks[i].source.key) break; //objects already assigned
-					sourceNo = mylinks[i].source;
-					targetNo = mylinks[i].target;
-					mylinks[i].source = mynodes[sourceNo];
-					mylinks[i].target = mynodes[targetNo];
+	if (!mylinks[Object.keys(mylinks)[0]].source.key) { //only if objects not already assigned
+			Object.keys(mylinks).forEach(function (key) {
+					//if (mylinks[key].source.key) break; //objects already assigned
+					sourceKey = mylinks[key].source;
+					targetKey = mylinks[key].target;
+					mylinks[key].source = mynodes[sourceKey];
+					mylinks[key].target = mynodes[targetKey];
 					//test existing, and add if new
-					if (existingLinks) if (doesLinkExist(mylinks[i],existingLinks) == null) existingLinks.push(mylinks[i]);
+					if (existingLinks) if (doesLinkExist(mylinks[key],existingLinksOld) == null) existingLinks[key]=mylinks[key];
 					// assign a opaType and directionType per value to encode opacity
-					if (v(mylinks[i].odds) <= 25) {
-						mylinks[i].opaType = "twofive";
-						mylinks[i].linkStrength = 0.25;
-					} else if (v(mylinks[i].odds) <= 50 && v(mylinks[i].odds) > 25) {
-						mylinks[i].opaType = "fivezero";
-						mylinks[i].linkStrength = 0.5;
-					} else if (v(mylinks[i].odds) <= 75 && v(mylinks[i].odds) > 50) {
-						mylinks[i].opaType = "sevenfive";
-						mylinks[i].linkStrength = 0.75;
-					} else if (v(mylinks[i].odds) <= 100 && v(mylinks[i].odds) > 75) {
-						mylinks[i].opaType = "onezerozero";
-						mylinks[i].linkStrength = 1;
+					beta_tr = Math.abs(mylinks[key].beta);
+					if (beta_tr > 1) {
+						mylinks[key].opaType = "strongest";
+						mylinks[key].linkStrength = 1;
+					} else if (beta_tr > 0.1) {
+						mylinks[key].opaType = "strong";
+						mylinks[key].linkStrength = 0.75;
+					} else if (beta_tr > 0.01) {
+						mylinks[key].opaType = "weak";
+						mylinks[key].linkStrength = 0.5;
+					} else {
+						mylinks[key].opaType = "weakest";
+						mylinks[key].linkStrength = 0.25;
 					}
-					if (mylinks[i].odds<1) mylinks[i].directionType = "lowers";
-					else mylinks[i].directionType = "increases";
-			}
+					if (mylinks[key].odds<1.0) mylinks[key].directionType = "lowers";
+					else mylinks[key].directionType = "increases";
+			});
+	}
 }
 
 function selectNodesAndLinksRiskMode() {
 	if (graphdata==null) { GO(); return; }
 	
 	//LIST or GRAPH
-	for (lg=0; lg< graphdata.children.length; lg++) {
-		if (graphdata.children[lg].key == "LIST") {
-			//find correct subtree
-			listtree = graphdata.children[lg].children;
-			/*for (var i=0; i< graphdata.children[lg].children.length; i++) {
-				if (graphdata.children[lg].children[i].key == "ABS") listtree_abs=graphdata.children[lg].children[i].children;
-				if (graphdata.children[lg].children[i].key == "REL") listtree_rel=graphdata.children[lg].children[i].children;
-			}break;*/
+	listtree = graphdata.children["LIST"].children;
+	graphlinks=graphdata.children["GRAPH"].children["LINKS"].children;
+	graphnodes=graphdata.children["GRAPH"].children["NODES"].children;
+	
+	initNodes(graphnodes);
+	initLinks(graphlinks,graphnodes,null);
 			
-			
-		} else if (graphdata.children[lg].key == "GRAPH") {
-			//find correct subtree
-			for (var i=0; i< graphdata.children[lg].children.length; i++) {
-						if (graphdata.children[lg].children[i].key == "LINKS") graphlinks=graphdata.children[lg].children[i].children;
-						if (graphdata.children[lg].children[i].key == "NODES") graphnodes=graphdata.children[lg].children[i].children;
-			}	
-			
-			initNodes(graphnodes);
-			initLinks(graphlinks,graphnodes,null);
-			
-			nodes=graphnodes;
-			links=graphlinks;
-		}
-	}
+	nodes=graphnodes;
+	links=graphlinks;
 }
 
 function selectNodesAndLinksExploreMode(key) {
 	if (graphdata==null) { refreshGraphSingle(key); return; }
 	
 	//select new nodes and links
-	for (var i=0; i< graphdata.children.length; i++) {
-		if (graphdata.children[i].key == "LINKS") newlinks=graphdata.children[i].children;
-		if (graphdata.children[i].key == "NODES") newnodes=graphdata.children[i].children;
-	}
+	newlinks=graphdata.children["LINKS"].children;
+	newnodes=graphdata.children["NODES"].children;
 	
-	//init nodes and add to existing
+	//init nodes 
 	initNodes(newnodes,key);	
 	//now add to existing nodes and links
-	if (graphnodes.length==0) graphnodes=newnodes;
+	if (Object.keys(graphnodes).length==0) graphnodes=newnodes;
 	else {
-		for (var i=0; i< newnodes.length; i++) {
-			if ((exnode = doesNodeExist(newnodes[i],graphnodes)) == null) graphnodes.push(newnodes[i]); //new node
+		Object.keys(newnodes).forEach(function (key) {
+			if ((exnode = doesNodeExist(newnodes[key],graphnodes)) == null) graphnodes[key]=newnodes[key]; //new node
 			else {
-				var isfocused = newnodes[i].isCurrentlyFocused;
-				newnodes[i]=exnode; //node exists -> replace to find correct links
-				if (isfocused) newnodes[i].isCurrentlyFocused=true;
+				var isfocused = newnodes[key].isCurrentlyFocused;
+				newnodes[key]=exnode; //node exists -> replace to find correct links
+				if (isfocused) newnodes[key].isCurrentlyFocused=true;
 			}
-		}
+		});
 	}
 	
 	//init links and add to existing 
@@ -847,17 +857,11 @@ function selectNodesAndLinksExploreMode(key) {
 }
 
 function doesNodeExist(node,searchnodes) {
-	for (var i=0; i<searchnodes.length; i++) {
-		if (searchnodes[i].key==node.key) return searchnodes[i];
-	}
-	return null;
+	return searchnodes[node.key];
 }
 
 function doesLinkExist(link,searchlinks) {
-	for (var i=0; i<searchlinks.length; i++) {
-		if (searchlinks[i].source.key==link.source.key && searchlinks[i].target.key==link.target.key) return searchlinks[i];
-	}
-	return null;
+	return searchlinks[link.source.key+link.target.key];
 }
 
 function drawGraphs () {
@@ -884,6 +888,7 @@ function drawGraphs () {
 	} else drawGraph();
 }
 		
+
 //filters first
 function drawGraph() {
 	
@@ -893,26 +898,14 @@ function drawGraph() {
 
 	var width = $(chartid).width(),
 	    height = $(chartid).height();
+		
 	
-	var force = d3.layout.force()
-		.nodes(nodes)
-		.links(links)
-		.size([width, height])
-		.linkDistance(linkDistance)
-		.linkStrength(function(d){return d.linkStrength})
-		.friction(friction)
-		.charge(charge)
-		.chargeDistance(chargeDistance)
-		.theta(theta)
-		.gravity(gravity)
-		.on("tick", tick)
-		.on("end", fixAll)
-		.start();
-	
+	nodes_arr=Object.values(nodes);
+	links_arr=Object.values(links);
 	
 	// build the arrow.
 	var defs=chart.selectAll("defs");
-	if (defs.length == 0 || defs[0].length==0) chart.append("svg:defs").selectAll("marker")
+	if (defs.empty()) chart.append("svg:defs").selectAll("marker")
 		.data(["end"])      // Different link/path types can be defined here
 	  .enter().append("svg:marker")    // This section adds in the arrows
 		.attr("id", String)
@@ -924,38 +917,37 @@ function drawGraph() {
 		.attr("orient", "auto")
 	  .append("svg:path")
 		.attr("d", "M0,-5L10,0L0,5");
-
-	 // Update the links
-	 //First: Link group
+		
+	
+	// Update the links
+	//First: Link group
 	var all_links = chart.select(".all_links");
-	 if (all_links.empty()) all_links = chart.append("g").attr("class", "all_links");
-    var path = all_links.selectAll("path.link").data(links).attr("class", function(d) { return "link " + d.typekey + " " + d.opaType + " " +d.directionType; });
-	// Enter any new links
-	path.enter().insert("svg:path")
+	if (all_links.empty()) all_links = chart.append("g").attr("class", "all_links");
+	
+	var path = all_links
+		.selectAll("path.link")
+		.data(links_arr);
+	 path.exit().remove(); //EXIT
+	 
+	var pathEnter = path.enter().insert("svg:path") //ENTER
 		.attr("class", function(d) { return "link " + d.typekey + " " + d.opaType + " " +d.directionType; })
 		.attr("marker-end", "url(#end)")
 		.on("mousemove", mousemoveTooltipLink)
           .on("mouseout", mouseoutTooltip);
-	// Exit any old links.
-    path.exit().remove();
+	
+	path = path.merge(pathEnter); // ENTER + UPDATE
 
-	// Update the nodes
+	
+	 // Update the nodes
 	var all_nodes = chart.select(".all_nodes");
 	 if (all_nodes.empty()) all_nodes = chart.append("g").attr("class", "all_nodes");
-	var node = all_nodes.selectAll(".nodes")
-		.data(nodes, function(d) { return d.key; });
-	node.select("circle")
-		.attr("class", function(d) { 
-			var myclass="node";
-			if (d.isCurrentlyFocused) myclass = myclass+ " SELECTED"; 
-			if (d.istarget) myclass = myclass + " NEW"; else myclass = myclass + " OLD";;
-			return myclass})
-		.attr("r", function(d){ 
-				if (d.isCurrentlyFocused) d.radius=nodemaxradius; else d.radius=nodeminradius; 
-				return d.radius;});
+
+	var node = all_nodes.selectAll(".nodes") //UPDATE
+		.data(nodes_arr, function(d) { return d.key; });
 		
-	// Enter any new nodes.
-	var nodeEnter = node.enter().append("g")
+	node.exit().remove(); //EXIT
+
+	var nodeEnter = node.enter().append("g") //ENTER
 		.attr("class", "nodes")
 		.on("mousemove", mousemoveTooltipNode)
           .on("mouseout", mouseoutTooltip)
@@ -975,31 +967,21 @@ function drawGraph() {
                         nodeClickInProgress = false;
                         focusNode(d);
                     }
-				},200); 
+				},100); 
 			}
         })
-		.call(force.drag().on("dragstart", dragstart));
-	
-	function dragstart(d) {
-		d3.select(this).classed("fixed", d.fixed = true);
-	}
-
-	// add the nodes
+		.call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+		  
 	nodeEnter.append("circle")
-		.attr("class", function(d) { 
-			var myclass="node";
-			if (d.isCurrentlyFocused) myclass = myclass+ " SELECTED"; 
-			if (d.istarget) myclass = myclass + " NEW"; else myclass = myclass + " OLD";;
-			return myclass})
-		.attr("r", function(d){ 
-				if (d.isCurrentlyFocused) d.radius=nodemaxradius; else d.radius=nodeminradius; 
-				return d.radius;})
 		.attr("fill",function(d) { 
 					return selectNodesColor(d);
-				});  
-		
-	// add the text 
-	nodeEnter.append("text")
+				});
+	
+	nodeEnter
+		.append("text")
 		.attr("x", 12)
 		.attr("dy", ".35em")
 		.text(function(d) { if (lang==("DE")) { 
@@ -1008,19 +990,51 @@ function drawGraph() {
 				if (d.key=="COUNT_ATC") return "Anzahl ATC"; 
 				if (d.key=="COUNT_ICD") return "Anzahl ICD"; 
 				} return d.key; 
-		});
-	// Exit any old nodes.
-    node.exit().remove();
-	
-	// add the curvy lines
-	function tick() {
-		node
-			.attr("transform", function(d) { 
-				d.x = Math.max(d.radius, Math.min(width - d.radius, d.x)); //set boundary
-				d.y = Math.max(d.radius, Math.min(height - d.radius, d.y));
-				return "translate(" + d.x + "," + d.y + ")"; });
+		});			
 		
-		path.attr("d", function(d) {
+	node = node.merge(nodeEnter);
+	node.select("circle")
+		.attr("class", function(d) { 
+			var myclass="node";
+			if (d.isCurrentlyFocused) myclass = myclass+ " SELECTED"; 
+			if (d.istarget) myclass = myclass + " NEW"; else myclass = myclass + " OLD";;
+			return myclass})
+		.attr("r", function(d){ 
+				if (d.isCurrentlyFocused) d.radius=nodemaxradius; else d.radius=nodeminradius; 
+				return d.radius;})
+		;  
+		
+	  function dragstarted(d) {
+	  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+	  d.fx = d.x;
+	  d.fy = d.y;
+	}
+
+	function dragged(d) {
+	  d.fx = Math.max(d.radius, Math.min(width - d.radius, d3.event.x));
+	  d.fy = Math.max(d.radius, Math.min(height - d.radius, d3.event.y));
+	}
+
+	function dragended(d) {
+	  if (!d3.event.active) simulation.alphaTarget(0);
+	  /*d.fx = null;
+	  d.fy = null;*/
+	  d3.select(this).classed("fixed", d.fixed = true);
+	}
+	
+	//simulation.restart();
+	if (simulation.alpha() < 0.05)
+		simulation.alpha(alpha).restart();
+	simulation
+      .nodes(nodes_arr)
+      .on("tick", ticked);
+
+  simulation.force("link")
+      .links(links_arr);
+
+  function ticked() {
+    path
+        .attr("d", function(d) {
             // Total difference in x and y from source to target
             var diffX = d.target.x - d.source.x,
             diffY = d.target.y - d.source.y;
@@ -1038,27 +1052,15 @@ function drawGraph() {
 					"A" + pathLength + "," + pathLength + " 0 0,1 " +
 					(d.target.x - offsetX_t) + "," + (d.target.y - offsetY_t);
         });
-	}
+		
 	
-	/*
-	function tick() {
-		path.attr("points", function(d) {
-		  return d.source.x + "," + d.source.y + " " + 
-				 (d.source.x + d.target.x)/2 + "," + (d.source.y + d.target.y)/2 + " " +
-				 d.target.x + "," + d.target.y; });
-			node
-				.attr("transform", function(d) { 
-					return "translate(" + d.x + "," + d.y + ")"; });
-	}*/
-	
-	function fixAll() {
-		/*
-		//in the end: fix all nodes
-		for (var i=0; i< nodes.length; i++) {
-			nodes[i].fixed = true;
-		}
-		*/
-	}
+	node
+			.attr("transform", function(d) { 
+				d.x = Math.max(d.radius, Math.min(width - d.radius, d.x)); //set boundary
+				d.y = Math.max(d.radius, Math.min(height - d.radius, d.y));
+				return "translate(" + d.x + "," + d.y + ")"; });
+		
+  }
 
 	fillNodesLabelOverview (nodes);
 	
@@ -1078,14 +1080,16 @@ function fillNodesLabelOverview (nodes) {
 	//add nodes to overview
 	$('.nodeUL').empty();
 	
-	sortednodes=sortArray(nodes,false);
-	for (var i = 0; i < sortednodes.length; i++) {
-		var thislist = "#nodeULEx1";
-		if (sortednodes[i].istarget && sortednodes[i].typekey=="ICD") thislist = "#nodeULPred1";
-		if (sortednodes[i].istarget && sortednodes[i].typekey=="ATC") thislist = "#nodeULPred2";	
-		if (!sortednodes[i].istarget && sortednodes[i].typekey=="ATC") thislist = "#nodeULEx2";	
-		$(thislist).append('<li class="nodeLI" style="color:'+selectNodesColor(sortednodes[i])+';"><span>'+sortednodes[i].label+'</span></li>');
-	}
+	//sortednodes=sortArray(nodes,false); //ToDo: use by Key HashSet?
+	Object.keys(nodes).forEach(function (key) {
+		if (nodes[key].typekey!="GEN") {
+			var thislist = "#nodeULEx1";
+			if (nodes[key].istarget && nodes[key].typekey=="ICD") thislist = "#nodeULPred1";
+			if (nodes[key].istarget && nodes[key].typekey=="ATC") thislist = "#nodeULPred2";	
+			if (!nodes[key].istarget && nodes[key].typekey=="ATC") thislist = "#nodeULEx2";	
+			$(thislist).append('<li class="nodeLI" style="color:'+selectNodesColor(nodes[key])+';"><span>'+nodes[key].label+'</span></li>');
+		}
+	});
 }
 
 
@@ -1125,6 +1129,10 @@ function filterChanger() {
 		typekey["typekeys"]=typekey["typekeys"] + $(this).val();
 	});
 	filtercriteria["typekey"]=typekey;
+	
+	linkmode["linkdepth_ALL"]=$('input[name=linkdepth]:checked', '#config_form').val()=="ALL";
+	linkmode["significance_ALL"]=$('input[name=significance]:checked', '#config_form').val()=="ALL";
+	linkmode["influence_ALL"]=$('input[name=influence]:checked', '#config_form').val()=="ALL";
 
 }
 
@@ -1157,7 +1165,7 @@ function resetFilter() {
 	
 	if (mode=="EXPLORE") {
 		$('input[name=significance]', '#config_form').filter('[value=ONLY]').prop('checked', true);
-		$('input[name=influence]', '#config_form').filter('[value=ALL]').prop('checked', true);
+		$('input[name=influence]', '#config_form').filter('[value=ONLY]').prop('checked', true);
 	}
 	else {
 		$('input[name=significance]', '#config_form').filter('[value=ONLY]').prop('checked', true);
@@ -1165,14 +1173,15 @@ function resetFilter() {
 	}
 	
 	filtercriteria = {};
+	linkmode={};
 
 }
 
 function resetHidden() {
-	for (var i = 0; i < graphnodes.length ; i++) {
-		graphnodes[i].hideNode=false;
+	Object.keys(graphnodes).forEach(function (key) {
+		graphnodes[key].hideNode=false;
 		//graphnodes[i].fixed = false;
-	}
+	});
 }
 
 function toBeFilteredOut(node) {
@@ -1195,128 +1204,127 @@ function toBeFilteredOut(node) {
 }
 
 function showLink(link,exploreMode,focusedOnly) {
-	var modus= $('input[name=linkdepth]:checked', '#config_form').val();
-	var modus_sign= $('input[name=significance]:checked', '#config_form').val();
-	var modus_infl= $('input[name=influence]:checked', '#config_form').val();
 	var isfine = true;
 	if (exploreMode) {
-		if (focusedOnly && modus != "ALL") 
+		if (focusedOnly && !linkmode["linkdepth_ALL"]) 
 			isfine = (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
 		else isfine=true;
-		if (modus_sign != "ALL") isfine=isfine && link.isSignificant;
-		if (modus_infl != "ALL") isfine=isfine && (link.directionType != "lowers");
+		if (!linkmode["significance_ALL"]) isfine=isfine && link.isSignificant;
+		if (!linkmode["influence_ALL"]) isfine=isfine && (link.directionType != "lowers");
 		return isfine;
 	} else {
-		var isfine = true;
-		if (modus != "ALL") 
+		if (!linkmode["linkdepth_ALL"]) 
 			isfine = (!link.source.istarget && link.target.istarget);
 		if (focusedOnly) 
 			isfine = isfine && (link.target.isCurrentlyFocused || link.source.isCurrentlyFocused);
-		if (modus_sign != "ALL") isfine=isfine && link.isSignificant;
-		if (modus_infl != "ALL") isfine=isfine && (link.directionType != "lowers");
+		if (!linkmode["significance_ALL"]) isfine=isfine && link.isSignificant;
+		if (!linkmode["influence_ALL"]) isfine=isfine && (link.directionType != "lowers");
 		return isfine ;
 	}
 	
-	
+	/*
 	if (modus == "CONNECTED" && number_focused>=2) { //not used, for explore mode
 		isfine = link.target.isCurrentlyFocused && link.source.isCurrentlyFocused;
-	}
+	}*/
 	return isfine;
 }
 
 function filterNodes(){
-    // we'll keep only the data where filterned nodes are the source or target
-    var newNodes = [];
-    var newLinks = [];
-	var newLinks2 = [];
+    var newNodes = {}; 
+    var newLinks = {};
+	var newLinks2 = {};
+	
+	//first: filter out nodes
+	Object.keys(graphnodes).forEach(function (key) {
+		graphnodes[key].hideNode=toBeFilteredOut(graphnodes[key]);
+	});
+	
+	//now filter links -> first: check for selected
+	var found=false;
+	Object.keys(graphlinks).forEach(function (key) {
+		if (showLink(graphlinks[key],mode=="EXPLORE",true)) {
+				newLinks[key]=graphlinks[key];
+				found=true;
+		}
+	});
 
-	//first: check for selected
-    for (var i = 0; i < graphlinks.length ; i++) {
-        var link = graphlinks[i];
-        if (showLink(link,mode=="EXPLORE",true)) newLinks.push(link);
-    }
     // if none are selected reinstate the whole dataset
-    if (newLinks.length == 0) {
+    if (!found) {
 		newLinks=graphlinks;
     }
 	
 	//now: filter all other criteria
-	for (var i = 0; i < newLinks.length ; i++) {
-        var link = newLinks[i];
-		var sourceOK=!toBeFilteredOut(link.source);
-		var targetOK=!toBeFilteredOut(link.target);
-		if (targetOK) addNodeIfNotThere(link.target,newNodes);
-		if (sourceOK) addNodeIfNotThere(link.source,newNodes);
-        if (targetOK && sourceOK && showLink(link,mode=="EXPLORE",false))
-			newLinks2.push(link);
-    }
+	Object.keys(newLinks).forEach(function (key) {
+        var link = newLinks[key];
+		var sourceOK=!link.source.hideNode;
+		var targetOK=!link.target.hideNode;
+        if (targetOK && sourceOK && showLink(link,mode=="EXPLORE",false)) {
+			newNodes[link.target.key]=link.target; // we'll keep only the data where filtered nodes are the source or target
+			newNodes[link.source.key]=link.source;
+			newLinks2[key] = link;
+		}
+    });
 	
 	links = newLinks2;
     nodes = newNodes;
-    
-    function addNodeIfNotThere( node, nodes) {
-			for ( var i=0; i < nodes.length; i++) {
-				if (nodes[i].key == node.key) return i;
-			}
-			return nodes.push(node) -1;
-    }
+  
 }
 
 
 // List-Graph --> 
 
-function getChildren(array,type) {
-	for (j=0; j< array.children.length; j++) {
+function getChildren(o,type) {
+	/*for (j=0; j< array.children.length; j++) {
 		if (array.children[j].key==type) return array.children[j].children;
-	}
+	}*/
+	if (o.children[type]) return o.children[type].children;
 	return null;
 }
 
-function getRiskNode (node) {
-	return getChildren(node,"has_successor")[0];
+function getRiskNode (o) {
+	return Object.values(getChildren(o,"has_successor"))[0];
 }
 
-function getFullLabelText(array,type) {
-	info=getChildren(array,type);
+function getFullLabelText(o,type) {
+	info=getChildren(o,type);
 	if (info==null) return "";
-	text="<ul class=tableUL>";
-	for (i=0; i<info.length; i++) {
-		if (!info[i].isnew) 
-			text = text + "<li><b>"+info[i].label+"</b></li>";
-		else text = text +"<li>"+info[i].label+"</li>";
-	}
-	text=text+"</ul>";
+	text = "";
+	Object.keys(info).forEach(function (key) {
+		if (!info[key].isnew) 
+			text = text + "<li><b>"+info[key].label+"</b></li>";
+		else text = text +"<li>"+info[key].label+"</li>";
+	});
 	return text;
 }
 
 var columns = [
     { head_en: 'Disease', head_de: 'Erkrankung', basecl: 'listtable disease',
       html: function(row) { return row.label; }, 
-	  needs_div: false },
+	  is_ul: false },
 	  
 	{ head_en: 'Group', head_de: 'Gruppe', basecl: 'listtable group',
       html: function(row) { info=getRiskNode(row); return "<FONT COLOR="+color[info.typekey](info.clusterkey)+">"+info.clusterlabel+"</font>"; }, 
-	  needs_div: false },
+	  is_ul: false },
 	  
     { head_en: 'Risk (abs/rel)', head_de: 'Risiko (abs/rel)', basecl: 'listtable risk',
       html: function(row) { info=getRiskNode(row); return round(info.risk*100,0) + "% / " + round(info.rrisk,1); }, 
-	  needs_div: false },
+	  is_ul: false },
 	  
     { head_en: 'Prevalence / Incidence', head_de: 'Prävalenz / Incidenz', basecl: 'listtable prevalence',
       html: function(row) { info=getRiskNode(row); return round(info.prevalence*100,1) + "% / " + round(info.incidence*100,1) +"% (at " + info.mean_age + ")"; }, 
-	  needs_div: false },
+	  is_ul: false },
 	  
     { head_en: 'Risk Factors ', head_de: 'Risikofaktoren', basecl: 'listtable factors',
       html: function(row) { return getFullLabelText(row,"has_risk_factor");  }, 
-	  needs_div: true },
+	  is_ul: true },
 	  
     { head_en: 'Diagnostic Procedures', head_de: 'Diagnostik', basecl: 'listtable diagnostics',
 		html: function(row) { return getFullLabelText(row,"has_diagnostic_procedure"); }, 
-	  needs_div: true },
+	  is_ul: true },
 		
 	{ head_en: 'Prevention', head_de: 'Prävention', basecl: 'listtable prevention',
       html: function(row) { return getFullLabelText(row,"has_prevention"); }, 
-	  needs_div: true }
+	  is_ul: true }
 ];
 
 function drawListGraph(type_pos,chartid) {
@@ -1328,13 +1336,7 @@ function drawListGraph(type_pos,chartid) {
 	chart.selectAll("thead").remove();
 	chart.selectAll("tbody").remove();
 	
-	var subtree=listtree;
-	for (j=0; j< listtree.length; j++) {
-		if (listtree[j].key == type_pos) {
-			subtree=listtree[j].children;
-			break;
-		}
-	}
+	var subtree=listtree[type_pos].children;
 
 	var w = $(chartid).width(),
 	    h = $(chartid).height();
@@ -1353,7 +1355,7 @@ function drawListGraph(type_pos,chartid) {
 	
 	chart.append('tbody')
 		.selectAll('tr')
-		.data(subtree).enter()
+		.data(Object.values(subtree)).enter()
 		.append('tr')
 		.attr('class', function(row, i) {
 			d=getRiskNode(row);
@@ -1401,8 +1403,9 @@ function drawListGraph(type_pos,chartid) {
           .on("mouseout", mouseoutTooltip)
 		 .html(function(col) {
 			 text = col.html;
-			 if (col.needs_div)
-				text='<div class="labellist_div">'+text+"</div>";
+			 if (col.is_ul) {
+				text='<div class="labellist_div"><ul class="tableUL">'+text+"</ul></div>";
+			 }
 			 return text})
 		;
 			  
@@ -1446,28 +1449,42 @@ function wrap(text) {
 	 if (d.children) return;
 	 if (d.key) {
 		 //focus
-		for (var i=0; i< graphnodes.length; i++) {
-			if (graphnodes[i].key == d.key) {
-				graphnodes[i].isCurrentlyFocused=true;
-			} else graphnodes[i].isCurrentlyFocused=false;
-		}
+		Object.keys(graphnodes).forEach(function (key) {
+			if (key == d.key) {
+				graphnodes[key].isCurrentlyFocused=true;
+			} else graphnodes[key].isCurrentlyFocused=false;
+			graphnodes[key].hideNode=false;
+			graphnodes[key].fixed = false;
+		});
 		$( "#tabs" ).tabs({ active: 1 });
 	 }
  }
 	  
  //TOOLTIP functions
- 	var mousemoveTooltipNode = function(d) {
-	  var mytext="";
-	  if (d.label) mytext=d.label; else mytext=d.key;
-	   if (!d.istarget && !d.children && mode=="RISKS") mytext=mytext + " (existing)";
-	  d3.select("#tooltip #t_heading")
-			.text(mytext);
+ //HELPERS
+ 
+ function positionTooltip () {
+	  var xPosition = d3.event.clientX + 5;
+	  var yPosition = d3.event.clientY + 5;
+	  
+	  var xMax = window.innerWidth, //document.documentElement.clientWidth,
+	  yMax=window.innerHeight; // document.documentElement.clientHeight;
 
-	  if (d.children) {
-		  d3.select("#tooltip #t_type")
+	  if (xPosition + $("#tooltip").width() > xMax ) xPosition=xMax -$("#tooltip").width()+15;
+	  if (yPosition + $("#tooltip").height() > yMax) yPosition=yMax-$("#tooltip").height()-15;
+
+	  d3.select("#tooltip")
+		.style("left", xPosition + "px")
+		.style("top", yPosition + "px");
+	  d3.select("#tooltip").classed("hidden", false);
+ }
+ 
+  function resetTooltipContent () {
+	  d3.select("#tooltip #t_heading")
+		.text(null);
+	  d3.select("#tooltip #t_type")
 			.text(null);
-			//.text("* statistical clusters are beta");
-			d3.select("#tooltip #t_cluster")
+		d3.select("#tooltip #t_cluster")
 			.text(null);
 		d3.select("#tooltip #t_absrisk")
 			.text(null);
@@ -1475,17 +1492,29 @@ function wrap(text) {
 			.text(null);
 		  d3.select("#tooltip #t_prev")
 			.text(null);
-		  d3.select("#tooltip #t_inc")
+		 d3.select("#tooltip #t_inc")
 			.text(null);
-		   d3.select("#tooltip #t_mean_age")
+		  d3.select("#tooltip #t_mean_age")
 			.text(null);
-		  d3.select("#tooltip #t_link")
+			d3.select("#tooltip #t_link")
 			.text(null);
-	  } else {
+			
+	 d3.select("#tooltip").style("width","240px");
+  }  
+ 
+ //REAL TOOLTIP FUNCTIONS
+ 
+ 	var mousemoveTooltipNode = function(d) {
+	  resetTooltipContent ();
+	  var mytext="";
+	  if (d.label) mytext=d.label; else mytext=d.key;
+	   if (!d.istarget && !d.children && mode=="RISKS") mytext=mytext + " (existing)";
+	  
+	  d3.select("#tooltip #t_heading")
+			.text(mytext);
+	  if (!d.children) {
 		  /*d3.select("#tooltip #t_type")
 			.html("<td width=50>Type:</td><td>" +  d.typelabel+"</td>");*/
-			d3.select("#tooltip #t_type")
-			.text(null);
 			d3.select("#tooltip #t_cluster")
 			.html("<td width=80>Group:</td><td>" +  d.clusterlabel+"</td>");
 			if (mode=="RISKS" && d.istarget) {
@@ -1493,12 +1522,6 @@ function wrap(text) {
 				.html("<td>Score:</td><td>" +round(d.risk,2) + "</td>");
 			  d3.select("#tooltip #t_relrisk")
 				.html("<td>Rel. score:</td><td>" + round(d.rrisk,1)+"</td>");
-			}
-			else { 
-				d3.select("#tooltip #t_absrisk")
-				.text(null);
-				d3.select("#tooltip #t_relrisk")
-				.text(null);
 			}
 			if (d.typekey == "ICD") {
 				d3.select("#tooltip #t_prev")
@@ -1516,32 +1539,15 @@ function wrap(text) {
 				else 
 					d3.select("#tooltip #t_prev")
 						.html("<td>Prevalence:</td><td>" + round(d.prevalence,1)+"</td>");
-				d3.select("#tooltip #t_inc")
-				.text(null);
-				d3.select("#tooltip #t_mean_age")
-				.text(null);
-				d3.select("#tooltip #t_link")
-				.text(null);
 			}
 	 }
 	 
-	  var xPosition = d3.event.clientX + 5;
-	  var yPosition = d3.event.clientY + 5;
-	  
-	  var xMax = window.innerWidth, //document.documentElement.clientWidth,
-	  yMax=window.innerHeight; // document.documentElement.clientHeight;
-
-	  if (xPosition + $("#tooltip").width() > xMax ) xPosition=xMax -$("#tooltip").width()+15;
-	  if (yPosition + $("#tooltip").height() > yMax) yPosition=yMax-$("#tooltip").height()-15;
-
-	  d3.select("#tooltip")
-		.style("left", xPosition + "px")
-		.style("top", yPosition + "px");
-	  d3.select("#tooltip").classed("hidden", false);
+	 positionTooltip();
 		
 	};
 	
 	var mousemoveTooltipLink = function(d) {
+		resetTooltipContent ();
 	 significant = d.isSignificant;;
 	 if (significant)
 		 sig_str=" *";
@@ -1550,14 +1556,8 @@ function wrap(text) {
 			.text(d.source.key + " to " + d.target.key + sig_str);
 	  d3.select("#tooltip #t_type")
 			.html("<td width=80>Type:</td><td>" +  d.typelabel+"</td>");
-		d3.select("#tooltip #t_cluster")
-			.text(null);
 		d3.select("#tooltip #t_absrisk")
 			.html("<td>Odds ratio:</td><td>" + round(d.odds,3)+"</td>");
-		  d3.select("#tooltip #t_relrisk")
-			.text(null);
-		  d3.select("#tooltip #t_prev")
-			.text(null);
 		 d3.select("#tooltip #t_inc")
 			.html("<td>Incidence:</td><td>" + round(d.proportion_source_get_incidents* 100,2)+"%"+"</td>");
 		  d3.select("#tooltip #t_mean_age")
@@ -1565,59 +1565,28 @@ function wrap(text) {
 		if (significant)
 		  d3.select("#tooltip #t_link")
 			.html("<td colspan=2>* significant correlation</td>");
-		else 
-			d3.select("#tooltip #t_link")
-			.text(null);
-			
-		var xPosition = d3.event.clientX + 5;
-	  var yPosition = d3.event.clientY + 5;
-	  
-	  var xMax = window.innerWidth, //document.documentElement.clientWidth,
-	  yMax=window.innerHeight; // document.documentElement.clientHeight;
-
-	  if (xPosition + $("#tooltip").width() > xMax ) xPosition=xMax -$("#tooltip").width()+15;
-	  if (yPosition + $("#tooltip").height() > yMax) yPosition=yMax-$("#tooltip").height()-15;
-
-	  d3.select("#tooltip")
-		.style("left", xPosition + "px")
-		.style("top", yPosition + "px");
-		 d3.select("#tooltip").classed("hidden", false);
+		
+		positionTooltip();
 	};
 	
 	
 	var mousemoveTooltipListCell = function(col) {
+		resetTooltipContent ();
+		text = col.html;
+		colnumber=Math.floor(text.length/800)+1;
+		d3.select("#tooltip").style("width",(colnumber*240)+"px");
+		
 	  d3.select("#tooltip #t_heading")
 		.text(col.head_en);
+
+		text = col.html;
+		var ulclass = "tableUL";
+		if (colnumber>1) ulclass=ulclass+" multicolumn"+colnumber;
+		text='<ul class="'+ulclass+'">'+text+'</ul>';
 	  d3.select("#tooltip #t_type")
-			.html(col.html);
-		d3.select("#tooltip #t_cluster")
-			.text(null);
-		d3.select("#tooltip #t_absrisk")
-			.text(null);
-		  d3.select("#tooltip #t_relrisk")
-			.text(null);
-		  d3.select("#tooltip #t_prev")
-			.text(null);
-		 d3.select("#tooltip #t_inc")
-			.text(null);
-		  d3.select("#tooltip #t_mean_age")
-			.text(null);
-			d3.select("#tooltip #t_link")
-			.text(null);
-			
-		var xPosition = d3.event.clientX + 5;
-	  var yPosition = d3.event.clientY + 5;
-	  
-	  var xMax = window.innerWidth, //document.documentElement.clientWidth,
-	  yMax=window.innerHeight; // document.documentElement.clientHeight;
+			.html(text);
 
-	  if (xPosition + $("#tooltip").width() > xMax ) xPosition=xMax -$("#tooltip").width()+15;
-	  if (yPosition + $("#tooltip").height() > yMax) yPosition=yMax-$("#tooltip").height()-15;
-
-	  d3.select("#tooltip")
-		.style("left", xPosition + "px")
-		.style("top", yPosition + "px");
-		 d3.select("#tooltip").classed("hidden", false);
+		positionTooltip();
 	};
 
 	var mouseoutTooltip = function() {
