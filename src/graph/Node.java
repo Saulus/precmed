@@ -1,28 +1,31 @@
 package graph;
 
+import java.util.HashMap;
+
 import configuration.Consts;
+
 
 public class Node {
 	private String code; //ICD or ATC (not UMLS)
 	private String alternative_code; //UMLS 
 	
-	private double prevalence = 0;
-	private double incidence = 0;
-	private int mean_age_incidence = 0;
-	private int mean_age_prevalence = 0;
+	private HashMap<String,NodeStatistics> nodeinfo = new HashMap<String,NodeStatistics>(); //graphname -> info 
+	
 	
 	public Node(String readable_code, String alternative_code) {
 		this.code=decideCode(readable_code,alternative_code);
 		this.alternative_code=alternative_code;
 	}
 	
-	public Node(String readable_code, String alternative_code, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
-		this.code=decideCode(readable_code,alternative_code);
-		this.alternative_code=alternative_code;
-		this.setPrevalence(prevalence);
-		this.setIncidence(incidence);
-		this.setMean_age_incidence(mean_age_incidence);
-		this.setMean_age_prevalence(mean_age_prevalence);
+		
+	public void addStatistics (String graphname, double prevalence, double incidence, int mean_age_incidence, int mean_age_prevalence) {
+		if (!this.nodeinfo.containsKey(graphname)) {
+			nodeinfo.put(graphname,new NodeStatistics());
+		}
+		this.setPrevalence(graphname,prevalence);
+		this.setIncidence(graphname,incidence);
+		this.setMean_age_incidence(graphname,mean_age_incidence);
+		this.setMean_age_prevalence(graphname,mean_age_prevalence);
 	}
 	
 	public static String decideCode(String readable_code, String alternative_code) {
@@ -35,42 +38,51 @@ public class Node {
 	}
 
 
-
-	public double getPrevalence() {
-		return prevalence;
+	public NodeStatistics getNodeStatistics(String graphname) {
+		//decide in which statistics to return
+		//return nodeinfo.get(graphname);
+		if (nodeinfo.containsKey(Consts.generalStatisticsGraph))
+			return nodeinfo.get(Consts.generalStatisticsGraph);
+		return null;
 	}
 
-	public void setPrevalence(double prevalence) {
-		this.prevalence = prevalence;
+	public double getPrevalence(String graphname) {
+		return nodeinfo.get(graphname).prevalence;
 	}
 
-	public double getIncidence() {
-		return incidence;
+	public void setPrevalence(String graphname,double prevalence) {
+		nodeinfo.get(graphname).prevalence = prevalence;
 	}
 
-	public void setIncidence(double incidence) {
-		this.incidence = incidence;
+	public double getIncidence(String graphname) {
+		return nodeinfo.get(graphname).incidence;
 	}
 
-	public int getMean_age_incidence() {
-		return mean_age_incidence;
+	public void setIncidence(String graphname,double incidence) {
+		nodeinfo.get(graphname).incidence = incidence;
 	}
 
-	public void setMean_age_incidence(int mean_age_incidence) {
-		this.mean_age_incidence = mean_age_incidence;
+	public int getMean_age_incidence(String graphname) {
+		return nodeinfo.get(graphname).mean_age_incidence;
 	}
 
-	public int getMean_age_prevalence() {
-		return mean_age_prevalence;
+	public void setMean_age_incidence(String graphname,int mean_age_incidence) {
+		nodeinfo.get(graphname).mean_age_incidence = mean_age_incidence;
 	}
 
-	public void setMean_age_prevalence(int mean_age_prevalence) {
-		this.mean_age_prevalence = mean_age_prevalence;
+	public int getMean_age_prevalence(String graphname) {
+		return nodeinfo.get(graphname).mean_age_prevalence;
+	}
+
+	public void setMean_age_prevalence(String graphname,int mean_age_prevalence) {
+		nodeinfo.get(graphname).mean_age_prevalence = mean_age_prevalence;
 	}
 	
 	public boolean isIntercept() {
 		return code.equals(Consts.intercept);
 	}
+	
+	
 
 
 }

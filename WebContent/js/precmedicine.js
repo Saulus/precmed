@@ -1519,9 +1519,9 @@ function wrap(text) {
 			.html("<td width=80>Group:</td><td>" +  d.clusterlabel+"</td>");
 			if (mode=="RISKS" && d.istarget) {
 			  d3.select("#tooltip #t_absrisk")
-				.html("<td>Score:</td><td>" +round(d.risk,2) + "</td>");
+				.html("<td>Risk:</td><td>" +round(d.risk,2) + "</td>");
 			  d3.select("#tooltip #t_relrisk")
-				.html("<td>Rel. score:</td><td>" + round(d.rrisk,1)+"</td>");
+				.html("<td>Rel. risk:</td><td>" + round(d.rrisk,1)+"</td>");
 			}
 			if (d.typekey == "ICD") {
 				d3.select("#tooltip #t_prev")

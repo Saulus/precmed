@@ -25,6 +25,8 @@ public final class Consts {
 	
 	public static final String riskRelationName = "has_successor";
 	
+	public static final String generalStatisticsGraph = "general";
+	
 	
 	public static final String demo_patients = "demo_patients.csv";	
 	

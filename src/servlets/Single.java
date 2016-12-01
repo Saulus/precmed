@@ -2,13 +2,13 @@ package servlets;
 
 import configuration.*;
 import graph.CreateResult;
-import graph.EdgeList;
-import graph.NodeList;
+import graph.MedicalGraph;
 import graph.TreeNode;
 import lists.ClusterLabels;
 import lists.NodeLabels;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
@@ -24,6 +24,9 @@ class RequestSetSingle {
 	public String KEY;
 	
 	public String lang;//EN or DE
+	
+	public String AGE;
+	public String GENDER;
 	
 	
 	public RequestSetSingle() {
@@ -47,13 +50,11 @@ public class Single extends HttpServlet {
 	
 	private NodeLabels nodelabels = new NodeLabels(); 
 	private ClusterLabels clusterlabels = new ClusterLabels(); 
-	private EdgeList edges = new EdgeList();
-	private NodeList nodes = new NodeList();
+	private MedicalGraph graph;
 	
 	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
 	public static String clusterFile = Init.getWebInfPath() + "/graphdata/cluster_and_types.csv";
-	public static String edges_path = Init.getWebInfPath() + "/graphdata/edges";
-	public static String nodesFile = Init.getWebInfPath() + "/graphdata/nodes.csv";
+	public static String graph_path = Init.getWebInfPath() + "/graphdata/graph";
 	
 	private boolean hasError = false;
 	
@@ -86,23 +87,21 @@ public class Single extends HttpServlet {
     	}
         
       //Read in graphdata
-        try {
-        	nodes.readInList(nodesFile);
-        } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + nodesFile);
-    		System.err.println(e.getMessage());
-    		e.printStackTrace();
-    	}
-        
-        try {
-        	edges.readInLists(edges_path, nodes);
-        } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + edges_path);
-    		System.err.println(e.getMessage());
-    		e.printStackTrace();
-    	}
+        graph = new MedicalGraph(graph_path);
 	        
     }
+    
+    
+    private double parseFeature(String feature) {
+		double val;
+		try {
+			val = Double.parseDouble(feature);
+		} catch (Exception e) {
+			System.err.println("Can not parse feature: "+feature);
+			val=1.;
+		}
+		return val;
+	}
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
@@ -129,6 +128,8 @@ public class Single extends HttpServlet {
 					String jsonString = "{}";
 					boolean english=true;
 					String key ="";
+					double val;
+					HashMap<String,Double> applic_features = new HashMap<String,Double>(); // for deciding applicability
 					//int version=1;
 					
 					
@@ -143,11 +144,22 @@ public class Single extends HttpServlet {
 						
 						//key
 						if (myrequest.KEY != null) key = myrequest.KEY;
+						
+						//Alter
+						if (myrequest.AGE != null) {
+							val = parseFeature(myrequest.AGE); 
+							applic_features.put(Consts.alterattribute, val);
+						}
+						//geschlecht
+						if (myrequest.GENDER != null) {
+							val = parseFeature(myrequest.GENDER); //Geschlecht is 0/1 coded, not 1/2
+							applic_features.put(Consts.geschlechtattribute, val);
+						}
 					}
 					
 					//calc risk scores and make json
-					CreateResult res = new CreateResult(nodes,edges,nodelabels,clusterlabels);
-					res.calcSingleNodeList(key, english);
+					CreateResult res = new CreateResult(graph,applic_features,nodelabels,clusterlabels);
+					res.calcSingleNodeList(graph.getNode(key), english);
 					TreeNode result = res.singleNode(english);
 					
 					String myresponse=gson.toJson(result);

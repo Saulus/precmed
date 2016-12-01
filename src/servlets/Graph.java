@@ -2,10 +2,8 @@ package servlets;
 
 import configuration.*;
 import graph.CreateResult;
-import graph.CreateResultDummy;
-import graph.EdgeList;
+import graph.MedicalGraph;
 import graph.Node;
-import graph.NodeList;
 import graph.TreeNode;
 import lists.ClusterLabels;
 import lists.NodeLabels;
@@ -58,13 +56,11 @@ public class Graph extends HttpServlet {
 	
 	private NodeLabels nodelabels = new NodeLabels(); 
 	private ClusterLabels clusterlabels = new ClusterLabels(); 
-	private EdgeList edges = new EdgeList();
-	private NodeList nodes = new NodeList();
+	private MedicalGraph graph;
 	
 	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
 	public static String clusterFile = Init.getWebInfPath() + "/graphdata/cluster_and_types.csv";
-	public static String edges_path = Init.getWebInfPath() + "/graphdata/edges";
-	public static String nodesFile = Init.getWebInfPath() + "/graphdata/nodes.csv";
+	public static String graph_path = Init.getWebInfPath() + "/graphdata/graph";
 	
 	private boolean hasError = false;
 	
@@ -94,21 +90,7 @@ public class Graph extends HttpServlet {
     	}
         
       //Read in graphdata
-        try {
-        	nodes.readInList(nodesFile);
-        } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + nodesFile);
-    		System.err.println(e.getMessage());
-    		e.printStackTrace();
-    	}
-        
-        try {
-        	edges.readInLists(edges_path, nodes);
-        } catch (Exception e) {
-    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + edges_path);
-    		System.err.println(e.getMessage());
-    		e.printStackTrace();
-    	}
+        graph = new MedicalGraph(graph_path);
         
     }
 
@@ -156,7 +138,7 @@ public class Graph extends HttpServlet {
 				if (hasError) response.sendError(520, "Init-Fehler");
 				else {
 					HashMap<Node,Double> features = new HashMap<Node,Double>();
-					HashMap<Node,Double> baseriskfeatures = new HashMap<Node,Double>();
+					HashMap<String,Double> applic_features = new HashMap<String,Double>(); // for deciding applicability
 					Gson gson = new Gson(); 
 					String jsonString = "{}";
 					boolean english=true;
@@ -192,42 +174,44 @@ public class Graph extends HttpServlet {
 						//BUild features
 							//Alter
 							if (myrequest.AGE != null) {
-								val = parseFeature(myrequest.AGE)/Consts.agescaler; //age is scaled by 5
-								features.put(nodes.getNode(Consts.alterattribute), val );
-								baseriskfeatures.put(nodes.getNode(Consts.alterattribute), val);
+								val = parseFeature(myrequest.AGE); 
+								features.put(graph.getNode(Consts.alterattribute), val );
+								applic_features.put(Consts.alterattribute, val);
 							}
 							//geschlecht
 							if (myrequest.GENDER != null) {
-								val = parseFeature(myrequest.GENDER)-1; //Geschlecht is 0/1 coded, not 1/2
-								features.put(nodes.getNode(Consts.geschlechtattribute), val );
-								baseriskfeatures.put(nodes.getNode(Consts.geschlechtattribute), val);
+								val = parseFeature(myrequest.GENDER); //Geschlecht is 0/1 coded, not 1/2
+								if (val>0) features.put(graph.getNode(Consts.maleCUI), 1.); //change Gender to Male or female
+								else features.put(graph.getNode(Consts.femaleCUI), 1.);
+								applic_features.put(Consts.geschlechtattribute, val);
 							}
 							if (myrequest.COUNT_ICD != null) {
 								val = parseFeature(myrequest.COUNT_ICD);
-								features.put(nodes.getNode(Consts.numberDISattribute), val );
+								features.put(graph.getNode(Consts.numberDISattribute), val );
 							}
 							if (myrequest.COUNT_ATC != null) {
 								val = parseFeature(myrequest.COUNT_ATC);
-								features.put(nodes.getNode(Consts.numberMEDattribute), val );
+								features.put(graph.getNode(Consts.numberMEDattribute), val );
 							}
 							//HOSP
 							if (myrequest.HOSP != null) {
 								val = parseFeatureBoolean(myrequest.HOSP);
-								if (val>0) features.put(nodes.getNode(Consts.hospattribute), val );
+								if (val>0) features.put(graph.getNode(Consts.hospattribute), val );
 							}
 							//atc
 							for (int i=0; i<myrequest.ATC.length; i++) {
-								features.put(nodes.getNode(myrequest.ATC[i]),1.);
+								features.put(graph.getNode(myrequest.ATC[i]),1.);
 							}
 							//icd
 							for (int i=0; i<myrequest.ICD.length; i++) {
-								features.put(nodes.getNode(myrequest.ICD[i]),1.);
+								features.put(graph.getNode(myrequest.ICD[i]),1.);
 							}
 					}
 					
+					
 					//calc risk scores and make json
-					CreateResult res = new CreateResult(nodes,edges,nodelabels,clusterlabels);
-					res.createNodes(features,baseriskfeatures,english,topX);
+					CreateResult res = new CreateResult(graph,applic_features,nodelabels,clusterlabels);
+					res.createNodes(features,english,topX);
 					
 					TreeNode result = new TreeNode("ROOT","Risks");
 					TreeNode graphnode=res.graphNode(english);

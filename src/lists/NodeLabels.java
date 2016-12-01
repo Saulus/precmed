@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import au.com.bytecode.opencsv.CSVReader;
-import graph.NodeList;
+import graph.MedicalGraph;
 
 class NodeInfo {
 	public String code;
@@ -75,7 +75,7 @@ public class NodeLabels {
 					throw new Exception("Configuration File " + file.getName() + "is empty");
 				for (String[] nextline : readIn) {
 					if (nextline.length>1) {
-						code = NodeList.readInNodeCode(nextline[codecol]);
+						code = MedicalGraph.readInNodeCode(nextline[codecol]);
 						if (addPrefix2Label) {
 							labelpre=code + " ";
 						} else 
