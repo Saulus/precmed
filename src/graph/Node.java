@@ -13,7 +13,7 @@ public class Node {
 	
 	
 	public Node(String readable_code, String alternative_code) {
-		this.code=decideCode(readable_code,alternative_code);
+		this.code=readable_code;
 		this.alternative_code=alternative_code;
 	}
 	
@@ -28,21 +28,33 @@ public class Node {
 		this.setMean_age_prevalence(graphname,mean_age_prevalence);
 	}
 	
-	public static String decideCode(String readable_code, String alternative_code) {
-		if (readable_code.isEmpty()) return alternative_code;
-		else return readable_code;
-	}
 
 	public String getCode() {
+		if (!code.isEmpty()) return code;
+		return alternative_code;
+	}
+	
+	public String getAltCode() {
+		if (!alternative_code.isEmpty()) return alternative_code;
 		return code;
+	}
+	
+	public void setCode(String code) {
+		this.code=code;
+	}
+	
+	public void setAltCode(String code) {
+		this.alternative_code=code;
 	}
 
 
 	public NodeStatistics getNodeStatistics(String graphname) {
 		//decide in which statistics to return
-		//return nodeinfo.get(graphname);
-		if (nodeinfo.containsKey(Consts.generalStatisticsGraph))
-			return nodeinfo.get(Consts.generalStatisticsGraph);
+		
+		//if (nodeinfo.containsKey(Consts.generalStatisticsGraph))
+		//	return nodeinfo.get(Consts.generalStatisticsGraph);
+		if (nodeinfo.containsKey(graphname))
+				return nodeinfo.get(graphname);
 		return null;
 	}
 

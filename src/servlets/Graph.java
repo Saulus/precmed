@@ -173,18 +173,18 @@ public class Graph extends HttpServlet {
 						
 						//BUild features
 							//Alter
-							if (myrequest.AGE != null) {
+							if (myrequest.AGE == null) myrequest.AGE="0";
 								val = parseFeature(myrequest.AGE); 
 								features.put(graph.getNode(Consts.alterattribute), val );
 								applic_features.put(Consts.alterattribute, val);
-							}
+								
 							//geschlecht
-							if (myrequest.GENDER != null) {
-								val = parseFeature(myrequest.GENDER); //Geschlecht is 0/1 coded, not 1/2
+							if (myrequest.GENDER == null) myrequest.GENDER="0";
+								val = parseFeature(myrequest.GENDER)-1; //Geschlecht is 0/1 coded, not 1/2
 								if (val>0) features.put(graph.getNode(Consts.maleCUI), 1.); //change Gender to Male or female
 								else features.put(graph.getNode(Consts.femaleCUI), 1.);
 								applic_features.put(Consts.geschlechtattribute, val);
-							}
+							
 							if (myrequest.COUNT_ICD != null) {
 								val = parseFeature(myrequest.COUNT_ICD);
 								features.put(graph.getNode(Consts.numberDISattribute), val );
@@ -205,6 +205,8 @@ public class Graph extends HttpServlet {
 							//icd
 							for (int i=0; i<myrequest.ICD.length; i++) {
 								features.put(graph.getNode(myrequest.ICD[i]),1.);
+								//add ICD chapters / groups
+								features.put(graph.getNode(nodelabels.getCluster4Code(myrequest.ICD[i])),1.);
 							}
 					}
 					

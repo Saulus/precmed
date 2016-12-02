@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -63,6 +64,16 @@ public class MedicalGraph {
 		}
 		
 		
+	}
+	
+	/*
+	 * checks whether target is allowed
+	 * e.g. removes ICG (group) targets, and HOSP target
+	 */
+	private boolean checkTarget (String target) {
+		boolean isAllowed=!target.startsWith(Consts.icdgroupattribute);
+		isAllowed = isAllowed && !target.equals("HOSP");
+		return isAllowed;
 	}
 	
 		
@@ -134,7 +145,7 @@ public class MedicalGraph {
 		if (code_raw.contains(".")) {
 			code_raw=code_raw.substring(0, code_raw.indexOf("."));
 		}
-		return code_raw.toUpperCase().replace(Consts.icdattribute, "").replace(Consts.atcattribute, "");
+		return code_raw.toUpperCase().replace(Consts.icdattribute, "").replace(Consts.atcattribute, "").replace(Consts.icdgroupattribute,"");
 	}
 	
 	public NodeList readInNodesList(File file, NodeList nodes, String graphname) throws Exception {
@@ -254,7 +265,9 @@ public class MedicalGraph {
 		double proportion_source_get_incidents;
 		int mean_age_of_incident_patients_with_condition_source;
 		for (String[] nextline : readIn) {
-			if (nextline.length>1) {
+			if (nextline.length>1 && checkTarget(nextline[targetcol])) { //Removes 
+				target=nodes.getNodeOrAdd(readInNodeCode(nextline[targetcol]),readInNodeCode(nextline[target_alternativecol]));
+				relation=readInEdgeRelation(nextline[relationcol]);
 				
 				if (relation.equals(Consts.riskRelationName)) {
 					//(Node source, Node target, String relation,double or,double beta,double pvalue,double number_relations,double proportion_of_incidents_have_source,double proportion_source_get_incidents,int mean_age_of_incident_patients_with_condition_source) {
@@ -266,32 +279,27 @@ public class MedicalGraph {
 					proportion_source_get_incidents=Utils.parseDouble(nextline[proportion_source_get_incidentscol]);
 					mean_age_of_incident_patients_with_condition_source=Utils.parseInt(nextline[mean_agecol]);
 					
-					// check for Nodes; or create
-					target=nodes.getNode(readInNodeCode(nextline[targetcol]),readInNodeCode(nextline[target_alternativecol]));
-					relation=readInEdgeRelation(nextline[relationcol]);
-					if (!graph_relations.get(graphname).contains(relation)) graph_relations.get(graphname).add(relation);
 					
 					//Differentiate Gender
 					if (readInNodeCode(nextline[sourcecol]).equals(Consts.geschlechtattribute)) {
-						source=nodes.getNode("",Consts.maleCUI);
+						source=nodes.getNodeOrAdd("male",Consts.maleCUI);
 						edges.addEdge(relation,source,target,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
 						
-						source=nodes.getNode("",Consts.femaleCUI);
+						source=nodes.getNodeOrAdd("female",Consts.femaleCUI);
 						edges.addEdge(relation,source,target,graphname,Math.exp(-beta),(-beta),pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
 						//ToDO: number_relations etc. above are not correct (only calculated for men)
 					} else {
-						source=nodes.getNode(readInNodeCode(nextline[sourcecol]),readInNodeCode(nextline[source_alternativecol]));
+						source=nodes.getNodeOrAdd(readInNodeCode(nextline[sourcecol]),readInNodeCode(nextline[source_alternativecol]));
 						edges.addEdge(relation,source,target,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
 					}
 
 				} else {
 					// check for Nodes; or create
-					source=nodes.getNode(readInNodeCode(nextline[sourcecol]),readInNodeCode(nextline[source_alternativecol]));
-					target=nodes.getNode(readInNodeCode(nextline[targetcol]),readInNodeCode(nextline[target_alternativecol]));
-					relation=readInEdgeRelation(nextline[relationcol]);
+					source=nodes.getNodeOrAdd(readInNodeCode(nextline[sourcecol]),readInNodeCode(nextline[source_alternativecol]));
 					edges.addEdge(relation,source,target);
 				}
 				
+				if (!graph_relations.get(graphname).contains(relation)) graph_relations.get(graphname).add(relation);
 				targetnodes.get(graphname).add(target);
 				sourcenodes.get(graphname).add(source);
 			}
@@ -356,14 +364,30 @@ public class MedicalGraph {
 	public HashMap<String,HashSet<Node>> getTargetNodesByRelation(HashSet<String> graphnames, Node sourcenode) {
 		HashMap<String,HashSet<Node>> targets = new HashMap<String,HashSet<Node>>(edges.getTargetNodesByRelation(sourcenode)); //copy to intersect
 		
-		Set<Node> intersection = new HashSet<Node>();
+	
+		//keep only relations that are in the graph
+		HashSet<String> accepted_rels = new HashSet<String>();
+		// & keep only targets that are in graph
+		//...by adding up all  targets for all graphs
+		HashSet<Node> add_up = new HashSet<Node>();
 		for (String graphname : graphnames) {
-			intersection.addAll(targetnodes.get(graphname));
+			add_up.addAll(targetnodes.get(graphname));
+			accepted_rels.addAll(graph_relations.get(graphname));
 		}
 		
-		//keep only targets that are in graph
+		//..by removing relations
+		Iterator<String> it = targets.keySet().iterator();
+		while (it.hasNext())
+		{
+		  String key = it.next();
+		  if (!accepted_rels.contains(key))
+		    it.remove();
+		 }
+		
+		
+		//... and retaining only targets that are in the add_up 
 		for (String rel: targets.keySet()) {
-			targets.get(rel).retainAll(intersection);
+			targets.get(rel).retainAll(add_up);
 		}
 		
 		return targets;

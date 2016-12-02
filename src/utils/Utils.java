@@ -7,7 +7,7 @@ public class Utils {
 	}
 	
 	public static double parseDouble(String s) {
-		if (s==null || s.equals("")) return 0;
+		if (s==null || s.equals("") || s.equals("nan")) return 0;
 		return Double.parseDouble(s);
 	}
 	

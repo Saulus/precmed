@@ -780,7 +780,7 @@ function initLinks(mylinks,mynodes,existingLinks) {
 			//var  v = d3.scaleLinear().range([0, 100]);
 			// Scale the range of the data
 			//v.domain([-5, 5]);
-			
+	
 	if (!mylinks[Object.keys(mylinks)[0]].source.key) { //only if objects not already assigned
 			Object.keys(mylinks).forEach(function (key) {
 					//if (mylinks[key].source.key) break; //objects already assigned
@@ -820,7 +820,8 @@ function selectNodesAndLinksRiskMode() {
 	graphnodes=graphdata.children["GRAPH"].children["NODES"].children;
 	
 	initNodes(graphnodes);
-	initLinks(graphlinks,graphnodes,null);
+	if (Object.keys(graphlinks).length>0)
+		initLinks(graphlinks,graphnodes,null);
 			
 	nodes=graphnodes;
 	links=graphlinks;
@@ -1576,15 +1577,20 @@ function wrap(text) {
 		colnumber=Math.floor(text.length/800)+1;
 		d3.select("#tooltip").style("width",(colnumber*240)+"px");
 		
+		head=col.head_en;
+		if (lang==("DE")) head=col.head_de;
 	  d3.select("#tooltip #t_heading")
-		.text(col.head_en);
+		.text(head);
 
-		text = col.html;
 		var ulclass = "tableUL";
 		if (colnumber>1) ulclass=ulclass+" multicolumn"+colnumber;
 		text='<ul class="'+ulclass+'">'+text+'</ul>';
 	  d3.select("#tooltip #t_type")
 			.html(text);
+		
+		if (col.head_en=="Risk (abs/rel)" || col.head_en=="Prevalence / Incidence")
+			d3.select("#tooltip #t_link")
+				.html("<td colspan=2>* based on age+gender cluster</td>");
 
 		positionTooltip();
 	};

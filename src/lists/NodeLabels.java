@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 import au.com.bytecode.opencsv.CSVReader;
 import graph.MedicalGraph;
+import graph.Node;
 
 class NodeInfo {
 	public String code;
@@ -99,6 +100,12 @@ public class NodeLabels {
 		return nodes_by_code.containsKey(code);
 	}
 	
+	public String getLabel4Code (Node node, boolean english) {
+		if (nodes_by_code.containsKey(node.getCode())) return getLabel4Code (node.getCode(), english);
+		if (nodes_by_code.containsKey(node.getAltCode())) return getLabel4Code (node.getAltCode(), english);
+		return "";
+	}
+	
 	public String getLabel4Code (String code, boolean english) {
 		if (!nodes_by_code.containsKey(code)) return "";
 		if (english)
@@ -106,9 +113,21 @@ public class NodeLabels {
 		else return nodes_by_code.get(code).label_de;
 	}
 	
+	public String getType4Code (Node node) {
+		if (nodes_by_code.containsKey(node.getCode())) return getType4Code(node.getCode());
+		if (nodes_by_code.containsKey(node.getAltCode())) return getType4Code(node.getAltCode());
+		return "";
+	}
+	
 	public String getType4Code (String code) {
 		if (!nodes_by_code.containsKey(code)) return "";
 		return nodes_by_code.get(code).typekey;
+	}
+	
+	public String getCluster4Code (Node node) {
+		if (nodes_by_code.containsKey(node.getCode())) return getCluster4Code(node.getCode());
+		if (nodes_by_code.containsKey(node.getAltCode())) return getCluster4Code(node.getAltCode());
+		return "";
 	}
 	
 	public String getCluster4Code (String code) {

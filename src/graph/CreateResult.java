@@ -115,6 +115,7 @@ public class CreateResult {
 	
 	
 	public CreateResult (MedicalGraph graph, HashMap<String,Double> applic_features, NodeLabels nodelabels,ClusterLabels clusterlabels ) {
+		this.graph=graph;
 		this.riskgraph = graph.getApplicableGraphRisk(applic_features);
 		if (riskgraph!=null) hasRiskGraph=true;
 		this.othergraphs=graph.getApplicableGraphNonRisk(applic_features);
@@ -149,9 +150,9 @@ public class CreateResult {
 			result.mean_age=stats.mean_age_incidence;
 		}
 			
-		result.typekey=nodelabels.getType4Code(node.getCode());
-		result.clusterkey=nodelabels.getCluster4Code(node.getCode());
-		result.label=nodelabels.getLabel4Code(node.getCode(), english);
+		result.typekey=nodelabels.getType4Code(node);
+		result.clusterkey=nodelabels.getCluster4Code(node);
+		result.label=nodelabels.getLabel4Code(node, english);
 		result.typelabel=clusterlabels.getLabel4Code(result.typekey, english);
 		result.clusterlabel=clusterlabels.getLabel4Code(result.clusterkey, english);
 		
@@ -172,24 +173,26 @@ public class CreateResult {
 		}
 		
 		//now RISK targets
-		for (Node target : graph.getAllTargets(riskgraph)) {
-				if (!features.containsKey(target)) {
-					//only new diseases and treatments (as graph models are build like that!)
-					onlinenode = populateNode(target,true,true,english);	
-					addRisks2Result(features,target,onlinenode);
-					onlinenode.roundMe();
-					risks.add(onlinenode);
-				}
+		if (hasRiskGraph) {
+			for (Node target : graph.getAllTargets(riskgraph)) {
+					if (!features.containsKey(target)) {
+						//only new diseases and treatments (as graph models are build like that!)
+						onlinenode = populateNode(target,true,true,english);	
+						addRisks2Result(features,target,onlinenode);
+						onlinenode.roundMe();
+						risks.add(onlinenode);
+					}
+			}
+			//sort and limit
+			risks_relative = new ArrayList<OnlineNode>(risks);
+			Collections.sort(risks, new AbsComp());
+			Collections.sort(risks_relative, new RelComp());
+			
+			risks =  risks.subList(0, topX);
+			for (int i=0; i<risks.size(); i++) risks.get(i).topX=i;
+			risks_relative = risks_relative.subList(0, topX);
+			for (int i=0; i<risks_relative.size(); i++) risks_relative.get(i).topX=i;
 		}
-		//sort and limit
-		risks_relative = new ArrayList<OnlineNode>(risks);
-		Collections.sort(risks, new AbsComp());
-		Collections.sort(risks_relative, new RelComp());
-		
-		risks =  risks.subList(0, topX);
-		for (int i=0; i<risks.size(); i++) risks.get(i).topX=i;
-		risks_relative = risks_relative.subList(0, topX);
-		for (int i=0; i<risks_relative.size(); i++) risks_relative.get(i).topX=i;
 		
 		
 		//NOW OTHER nodes connected to risk targets
@@ -292,6 +295,7 @@ public class CreateResult {
 		Node sourcenode;
 		Node targetnode;
 		Edge e;
+		EdgeStatistics stats;
 		for (String source : nodetree.getChildrenKeys()) {
 			for (String target : nodetree.getChildrenKeys()) {
 				sourcenode=graph.getNode(source);
@@ -301,16 +305,18 @@ public class CreateResult {
 						link = new LinkResult();
 						link.source=source;
 						link.target=target;
-						link.odds=e.getEdgeStatistics(riskgraph).or;
-						link.beta=e.getEdgeStatistics(riskgraph).beta;
-						link.proportion_source_get_incidents=e.getEdgeStatistics(riskgraph).proportion_source_get_incidents;
-						link.mean_age=e.getEdgeStatistics(riskgraph).mean_age_of_incident_patients_with_condition_source;
-						link.pvalue=e.getEdgeStatistics(riskgraph).pvalue;
-						link.isSignificant=e.getEdgeStatistics(riskgraph).isSignificant;
-						/*e.getNumber_relations(riskgraph)... 
-						 * link.typekey=e.getRelation(x);
-						link.typelabel=clusterlabels.getLabel4Code(link.typekey, english);*/
-						link.roundMe();
+						stats=e.getEdgeStatistics(riskgraph);
+						if (stats != null) {
+							link.odds=stats.or;
+							link.beta=stats.beta;
+							link.proportion_source_get_incidents=stats.proportion_source_get_incidents;
+							link.mean_age=stats.mean_age_of_incident_patients_with_condition_source;
+							link.pvalue=stats.pvalue;
+							link.isSignificant=stats.isSignificant;
+							link.typekey=Consts.riskRelationName;
+							link.typelabel=clusterlabels.getLabel4Code(link.typekey, english);
+							link.roundMe();
+						}
 						newlinks.add(source.concat(target),link);
 				}
 			}

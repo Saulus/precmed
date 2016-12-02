@@ -3,7 +3,6 @@ package graph;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import configuration.Consts;
 
 public class Edge {
 	public Node source;
@@ -50,13 +49,17 @@ public class Edge {
 	}
 	
 	public double getNumber_relations(String graphname) {
-		return edgeinfo.get(graphname).number_relations;
+		if (edgeinfo.containsKey(graphname)) return edgeinfo.get(graphname).number_relations; 
+		return 0;
 	}
 	
 	public EdgeStatistics getEdgeStatistics(String graphname) {
 		//decide in which statistics to return
-		//return nodeinfo.get(graphname);
-		return edgeinfo.get(Consts.generalStatisticsGraph);
+		//CAVE: general graph might not have egdes (yet)
+		if (edgeinfo.containsKey(graphname))
+			return edgeinfo.get(graphname);
+		//return edgeinfo.get(Consts.generalStatisticsGraph);
+		return null;
 	}
 	
 	public double getBeta(String graphname) {

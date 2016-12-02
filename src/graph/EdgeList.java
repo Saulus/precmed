@@ -48,7 +48,7 @@ public class EdgeList {
 		if (!edges_source_target.containsKey(source))
 			edges_source_target.put(source, new HashMap<Node,Edge>());
 		if (!edges_source_target.get(source).containsKey(target)) 
-			edges_target_source.get(source).put(target, edge);
+			edges_source_target.get(source).put(target, edge);
 		
 		
 		edge.addRelation(relation);

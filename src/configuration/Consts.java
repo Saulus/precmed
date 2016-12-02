@@ -6,7 +6,7 @@ Collected constants of general utility.
 **/
 public final class Consts {
 	
-	public static final String version = "2.0";
+	public static final String version = "3.0b";
 	
 	
 	public static final String alterattribute="AGE";
@@ -18,6 +18,7 @@ public final class Consts {
 	public static final String intercept="INTERCEPT";
 	public static final String atcattribute="ATC_";
 	public static final String icdattribute="ICD_";
+	public static final String icdgroupattribute="ICG_";
 	
 	public static final int topX = 3; //return only Top n risks 
 	
