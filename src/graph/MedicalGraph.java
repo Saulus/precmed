@@ -280,14 +280,11 @@ public class MedicalGraph {
 					mean_age_of_incident_patients_with_condition_source=Utils.parseInt(nextline[mean_agecol]);
 					
 					
-					//Differentiate Gender
+					//Add Gender to intercept (this is needed for clusters with gender=1)
 					if (readInNodeCode(nextline[sourcecol]).equals(Consts.geschlechtattribute)) {
-						source=nodes.getNodeOrAdd("male",Consts.maleCUI);
-						edges.addEdge(relation,source,target,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
+						source=interceptnode;
+						edges.addToEdge(relation,source,target,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
 						
-						source=nodes.getNodeOrAdd("female",Consts.femaleCUI);
-						edges.addEdge(relation,source,target,graphname,Math.exp(-beta),(-beta),pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
-						//ToDO: number_relations etc. above are not correct (only calculated for men)
 					} else {
 						source=nodes.getNodeOrAdd(readInNodeCode(nextline[sourcecol]),readInNodeCode(nextline[source_alternativecol]));
 						edges.addEdge(relation,source,target,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);

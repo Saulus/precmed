@@ -59,12 +59,15 @@ public class EdgeList {
 		source_relation_target.get(source).get(relation).add(target);
 	}
 	
+	
+	//adds edge if not present
 	public void addEdge(String relation,Node source, Node target, String graphname, double or,double beta,double pvalue,double number_relations,double proportion_of_incidents_have_source,double proportion_source_get_incidents,int mean_age_of_incident_patients_with_condition_source) {
 		this.addEdge(relation,source, target);
 		Edge e = edges_target_source.get(target).get(source);
 		e.addStatistics(graphname, or, pvalue, beta, number_relations, proportion_of_incidents_have_source, proportion_source_get_incidents, mean_age_of_incident_patients_with_condition_source);
 	
 	}
+	
 	
 	public boolean nodeIsTarget (Node node) {
 		return (edges_target_source.containsKey(node));
