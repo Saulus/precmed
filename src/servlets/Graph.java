@@ -61,10 +61,10 @@ public class Graph extends HttpServlet {
 	private EdgeList edges = new EdgeList();
 	private NodeList nodes = new NodeList();
 	
-	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
-	public static String clusterFile = Init.getWebInfPath() + "/graphdata/cluster_and_types.csv";
-	public static String edges_path = Init.getWebInfPath() + "/graphdata/edges";
-	public static String nodesFile = Init.getWebInfPath() + "/graphdata/nodes.csv";
+	public static String label_path = Init.getWebInfPath() + "/graphdata_one/node_labels";
+	public static String clusterFile = Init.getWebInfPath() + "/graphdata_one/cluster_and_types.csv";
+	public static String edges_path = Init.getWebInfPath() + "/graphdata_one/edges";
+	public static String nodesFile = Init.getWebInfPath() + "/graphdata_one/nodes.csv";
 	
 	private boolean hasError = false;
 	

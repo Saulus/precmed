@@ -784,6 +784,7 @@ function initLinks(mylinks,mynodes,existingLinks) {
 	if (!mylinks[Object.keys(mylinks)[0]].source.key) { //only if objects not already assigned
 			Object.keys(mylinks).forEach(function (key) {
 					//if (mylinks[key].source.key) break; //objects already assigned
+					mylinks[key].key=key;
 					sourceKey = mylinks[key].source;
 					targetKey = mylinks[key].target;
 					mylinks[key].source = mynodes[sourceKey];
@@ -903,6 +904,7 @@ function drawGraph() {
 	nodes_arr=Object.values(nodes);
 	links_arr=Object.values(links);
 	
+		
 	// build the arrow.
 	var defs=chart.selectAll("defs");
 	if (defs.empty()) chart.append("svg:defs").selectAll("marker")
@@ -926,7 +928,7 @@ function drawGraph() {
 	
 	var path = all_links
 		.selectAll("path.link")
-		.data(links_arr);
+		.data(links_arr, function(d) { return d.key; });
 	 path.exit().remove(); //EXIT
 	 
 	var pathEnter = path.enter().insert("svg:path") //ENTER
@@ -967,7 +969,7 @@ function drawGraph() {
                         nodeClickInProgress = false;
                         focusNode(d);
                     }
-				},100); 
+				},200); 
 			}
         })
 		.call(d3.drag()

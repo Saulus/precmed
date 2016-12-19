@@ -29,7 +29,7 @@ public class Lists extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
 
-	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
+	public static String label_path = Init.getWebInfPath() + "/graphdata_one/node_labels";
 	public HashMap<String,String> mykeylists_eng = new HashMap<String,String>(); 
 	public HashMap<String,String> mykeylists_de = new HashMap<String,String>(); 
        

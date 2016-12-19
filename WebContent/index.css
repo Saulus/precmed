@@ -599,7 +599,7 @@ text {
 
 path.link {
   fill: none;
-  stroke-width: 1.5px;
+  stroke-width: 2.0px;
 }
 
 path.link.has_successor.lowers {
