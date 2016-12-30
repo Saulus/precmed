@@ -248,6 +248,7 @@ public class CreateResult {
 		TreeNode subnode_risks;
 		TreeNode subnode_other;
 		OnlineNode onlinenode;
+		HashMap<String,OnlineNode> onlinenode_arr;
 		
 		//Add targets where risk nodes are source from othergraphs
 		HashMap<String,HashSet<Node>> targets_from_risk;
@@ -261,12 +262,14 @@ public class CreateResult {
 			//add info from othergraphs nodes by relation
 			targets_from_risk = graph.getTargetNodesByRelation(othergraphs, graph.getNode(risk.key));
 			for (String relation : targets_from_risk.keySet()) {
-				subnode_other= new TreeNode(relation,clusterlabels.getLabel4Code(relation, english));
+				onlinenode_arr = new HashMap<String,OnlineNode>();
 				for (Node n : targets_from_risk.get(relation)) {
 					isnew=!features.containsKey(n);
 					onlinenode=populateNode(n,false,isnew,english);
-					subnode_other.add(onlinenode.key,onlinenode);
+					onlinenode_arr.put(onlinenode.key,onlinenode);
 				}
+				subnode_other= new TreeNode(relation,clusterlabels.getLabel4Code(relation, english));
+				subnode_other.addAll(onlinenode_arr.values(),true,true);
 				node.add(subnode_other.key,subnode_other);
 			}
 			root.add(node.key,node);
@@ -284,7 +287,7 @@ public class CreateResult {
 		//combresults.addAll(othernodes);//ToDo: Re-Include other relations
 		
 		TreeNode nodetree = new TreeNode("NODES","Nodes");
-		nodetree.addAll(combresults,true);
+		nodetree.addAll(combresults,true,false);
 		newresult.add(nodetree.key,nodetree);
 				
 		//add links

@@ -1,9 +1,9 @@
 package graph;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -33,10 +33,17 @@ public class TreeNode {
 	}
 	
 	
-	class ListComp implements Comparator<CreateResult.OnlineNode>{
+	class KeyComp implements Comparator<CreateResult.OnlineNode>{
 	    @Override
 	    public int compare(OnlineNode e1, OnlineNode e2) {
-	    	return e1.key.compareTo(e2.key);
+	    	return e1.key.compareToIgnoreCase(e2.key);
+	    }
+	}
+	
+	class LabelComp implements Comparator<CreateResult.OnlineNode>{
+	    @Override
+	    public int compare(OnlineNode e1, OnlineNode e2) {
+	    	return e1.label.compareToIgnoreCase(e2.label);
 	    }
 	}
 	
@@ -46,7 +53,7 @@ public class TreeNode {
 		List<CreateResult.OnlineNode> sortedList = new ArrayList<CreateResult.OnlineNode>(l);
 		if (sort) {
 		//	add sorted by key
-			Collections.sort(sortedList, new ListComp());
+			Collections.sort(sortedList, new KeyComp());
 		}
 		
 		for (CreateResult.OnlineNode a : sortedList) {
@@ -56,11 +63,12 @@ public class TreeNode {
 	}
 	
 	
-	public void addAll(HashSet<CreateResult.OnlineNode> l, boolean sort) {
+	public void addAll(Collection<CreateResult.OnlineNode> l, boolean sort, boolean byLabel) {
 		List<CreateResult.OnlineNode> sortedList = new ArrayList<CreateResult.OnlineNode>(l);
 		if (sort) {
 		//	add sorted by key
-			Collections.sort(sortedList, new ListComp());
+			if (byLabel) Collections.sort(sortedList, new LabelComp());
+			else Collections.sort(sortedList, new KeyComp());
 		}
 		
 		for (CreateResult.OnlineNode a : sortedList) {

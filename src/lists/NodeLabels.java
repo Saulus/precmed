@@ -81,8 +81,9 @@ public class NodeLabels {
 							labelpre=code + " ";
 						} else 
 							labelpre="";
-						if (label_decol<nextline.length) labelde=labelpre+ nextline[label_decol];
+						if (label_decol<nextline.length) labelde=labelpre+ nextline[label_decol]; else labelde="";
 						if (label_engcol<nextline.length) labelen=labelpre+ nextline[label_engcol]; else labelen=labelde;
+						if (labelde.isEmpty())labelde=labelen;
 						if (clustercol<nextline.length) cluster=nextline[clustercol]; else cluster="";
 						this.addLabel(code,labelde,labelen,nextline[typecol],cluster);
 					}
