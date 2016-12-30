@@ -21,8 +21,7 @@ public final class Consts {
 	public static final String icdgroupattribute="ICG_";
 	
 	public static final int topX = 3; //return only Top n risks 
-	
-	public static final int agescaler = 5;
+	public static final int maxOdds = 5; // to filter out unusual high odds ratios that rather hint to systemic irregularities
 	
 	public static final String riskRelationName = "has_successor";
 	

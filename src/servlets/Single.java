@@ -87,7 +87,7 @@ public class Single extends HttpServlet {
     	}
         
       //Read in graphdata
-        graph = new MedicalGraph(graph_path);
+        graph = new MedicalGraph(graph_path,nodelabels);
 	        
     }
     
@@ -152,7 +152,7 @@ public class Single extends HttpServlet {
 						}
 						//geschlecht
 						if (myrequest.GENDER != null) {
-							val = parseFeature(myrequest.GENDER); //Geschlecht is 0/1 coded, not 1/2
+							val = parseFeature(myrequest.GENDER)-1; //Geschlecht is 0/1 coded, not 1/2
 							applic_features.put(Consts.geschlechtattribute, val);
 						}
 					}
@@ -161,6 +161,8 @@ public class Single extends HttpServlet {
 					CreateResult res = new CreateResult(graph,applic_features,nodelabels,clusterlabels);
 					res.calcSingleNodeList(graph.getNode(key), english);
 					TreeNode result = res.singleNode(english);
+					TreeNode clusternode=res.clusterNode(english);
+					result.add(clusternode.key,clusternode);
 					
 					String myresponse=gson.toJson(result);
 					

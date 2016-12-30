@@ -13,6 +13,7 @@ import java.util.Set;
 
 import au.com.bytecode.opencsv.CSVReader;
 import configuration.Consts;
+import lists.NodeLabels;
 import utils.Utils;
 
 class GraphApplicability {
@@ -33,6 +34,30 @@ class GraphApplicability {
 		return isApplicable;
 	}
 	
+	public String getClusterName (boolean english) {
+		String cluster;
+		if (gender==0) {
+			if (english) cluster="female, ";
+			else cluster="weiblich, ";
+		} else {
+			if (english) cluster="male, ";
+			else cluster="männlich, ";
+		} 
+		
+		String min = "";
+		String max = "";
+		if (age_min>-1) min=Integer.toString(age_min);
+		if (age_max>-1 && age_max<130) max=Integer.toString(age_max);
+		if (english) cluster += "age ";
+		else cluster += "Alter ";
+		cluster+=min + " - " + max;
+		 
+		return cluster;
+	}
+	
+	
+	
+	
 }
 
 public class MedicalGraph {
@@ -48,13 +73,13 @@ public class MedicalGraph {
 	
 		
 			
-	public MedicalGraph(String graph_path)  {
+	public MedicalGraph(String graph_path, NodeLabels nodelabels)  {
 		//Read in graphdata
 		File[] graphdirs = new File(graph_path).listFiles();
 		for (File dir : graphdirs) {
 			if (dir.isDirectory()) {
 				try {
-					readInGraph(dir);
+					readInGraph(dir, nodelabels);
 				} catch (Exception e) {
 					System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + dir.getPath());
 					System.err.println(e.getMessage());
@@ -77,7 +102,7 @@ public class MedicalGraph {
 	}
 	
 		
-	private void readInGraph (File subgraphdir) throws Exception {
+	private void readInGraph (File subgraphdir,  NodeLabels nodelabels) throws Exception {
 		//directory name = graphname
 		String graphname = subgraphdir.getName();
 		targetnodes.put(graphname, new HashSet<Node>());
@@ -133,7 +158,7 @@ public class MedicalGraph {
 		}
 		
 		for (File file : edesFiles) {
-			edges=readInEdgeList(file,edges,nodes,graphname);
+			edges=readInEdgeList(file,edges,nodes,graphname, nodelabels);
 			edges.testSignificance();
 		}
 		graphs.put(graphname, ga);
@@ -157,7 +182,7 @@ public class MedicalGraph {
 		String[] headerline = readIn.get(0);
 		readIn.remove(0);
 		int codecol=0;
-		int alternative_codecol=0;
+		int alternative_codecol=99;
 		int prevalencecol=1;
 		int incidencecol=2;
 		int mean_age_incidencecol=3;
@@ -173,6 +198,8 @@ public class MedicalGraph {
 		}
 		if (readIn.size()==0 )
 			throw new Exception("Configuration File " + file + "is empty");
+		
+		if (alternative_codecol==99) alternative_codecol=codecol;
 		
 		String code;
 		String altcode;
@@ -206,8 +233,7 @@ public class MedicalGraph {
 		return relation_raw.toLowerCase().replace(" ", "_");
 	}
 	
-	public EdgeList readInEdgeList(File file, EdgeList edges, NodeList nodes, String graphname) throws Exception {
-		Node interceptnode = nodes.getNode(Consts.intercept);
+	public EdgeList readInEdgeList(File file, EdgeList edges, NodeList nodes, String graphname,  NodeLabels nodelabels) throws Exception {
 		Charset inputCharset = Charset.forName("ISO-8859-1");
 
 		CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file), inputCharset), ';', '"'); //UTF-8?
@@ -254,7 +280,7 @@ public class MedicalGraph {
 
 		if (readIn.size()==0 )
 			throw new Exception("Configuration File " + file.getName() + "is empty");
-		Node source;
+		Node source=null;
 		Node target;
 		String relation="";
 		double or;
@@ -279,29 +305,27 @@ public class MedicalGraph {
 					proportion_source_get_incidents=Utils.parseDouble(nextline[proportion_source_get_incidentscol]);
 					mean_age_of_incident_patients_with_condition_source=Utils.parseInt(nextline[mean_agecol]);
 					
-					
-					//Add Gender to intercept (this is needed for clusters with gender=1)
 					if (readInNodeCode(nextline[sourcecol]).equals(Consts.geschlechtattribute)) {
-						source=interceptnode;
-						edges.addToEdge(relation,source,target,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
-						
+						//add beta to intercept for gender edge
+						edges.add2Beta(nodes.getNode(Consts.intercept),target,graphname,beta);
+						source=null;
 					} else {
 						source=nodes.getNodeOrAdd(readInNodeCode(nextline[sourcecol]),readInNodeCode(nextline[source_alternativecol]));
-						edges.addEdge(relation,source,target,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
+						edges.addEdge(relation,source,target,nodelabels,graphname,or,beta,pvalue,number_relations,proportion_of_incidents_have_source,proportion_source_get_incidents,mean_age_of_incident_patients_with_condition_source);
 					}
-
+					
 				} else {
 					// check for Nodes; or create
 					source=nodes.getNodeOrAdd(readInNodeCode(nextline[sourcecol]),readInNodeCode(nextline[source_alternativecol]));
-					edges.addEdge(relation,source,target);
+					edges.addEdge(relation,source,target,nodelabels);
 				}
 				
 				if (!graph_relations.get(graphname).contains(relation)) graph_relations.get(graphname).add(relation);
 				targetnodes.get(graphname).add(target);
-				sourcenodes.get(graphname).add(source);
+				if (source!=null) sourcenodes.get(graphname).add(source);
 			}
 		}
-		edges.setInterceptNode(interceptnode);
+		edges.setInterceptNode(nodes.getNode(Consts.intercept));
 		return edges;
 	}
 	
@@ -396,6 +420,10 @@ public class MedicalGraph {
 	
 	public Edge getEdge(Node sourcenode, Node targetnode) {
 		return edges.getEdge(sourcenode,targetnode);
+	}
+	
+	public String getClusterName(String graph, boolean english) {
+		return graphs.get(graph).getClusterName(english);
 	}
 	
 

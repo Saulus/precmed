@@ -90,7 +90,7 @@ public class Graph extends HttpServlet {
     	}
         
       //Read in graphdata
-        graph = new MedicalGraph(graph_path);
+        graph = new MedicalGraph(graph_path, nodelabels);
         
     }
 
@@ -220,6 +220,8 @@ public class Graph extends HttpServlet {
 					TreeNode listnode=res.listNode(english);
 					result.add(graphnode.key,graphnode);
 					result.add(listnode.key,listnode);
+					TreeNode clusternode=res.clusterNode(english);
+					result.add(clusternode.key,clusternode);
 					String myresponse=gson.toJson(result);
 					
 					response.getWriter().append(myresponse);

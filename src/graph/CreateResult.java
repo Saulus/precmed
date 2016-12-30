@@ -35,8 +35,8 @@ public class CreateResult {
 	class OnlineNode {
 		public String key;
 		public String label;
-		public double risk = 0; //absolute risk: KNR , KH
-		public double rrisk = 0; //relative risk
+		public double risk = 1; //absolute risk: KNR , KH
+		public double rrisk = 1; //relative risk
 		//public double auc = 0;
 		public double prevalence = 0;
 		public double incidence = 0;
@@ -61,9 +61,16 @@ public class CreateResult {
 		}
 	}
 	
+	/*
+	 * sort:
+	 *    if rel-risk < 1: move to back
+	 *    if risk<risk: move to back
+	 */
 	class AbsComp implements Comparator<OnlineNode>{
 	    @Override
 	    public int compare(OnlineNode e1, OnlineNode e2) {
+	    	if(e2.rrisk>1 && e1.rrisk<=1) return 1; 
+	    	if(e1.rrisk>1 && e2.rrisk<=1) return -1;
 	    	if(e2.risk > e1.risk) return 1;
 	    	if(e2.risk < e1.risk) return -1;
 	        return 0;
@@ -131,7 +138,7 @@ public class CreateResult {
 			//double baserisk = graph.getRisk(key, baseriskfeatures);
 			//if (baserisk==0.) baserisk =result.incidence;
 			//result.rrisk=result.risk/baserisk;
-			targetresult.rrisk=targetresult.risk/targetnode.getIncidence(riskgraph); //targetresult.incidence; //CAVE: currently calculated like this... to be discussed!
+			targetresult.rrisk=targetresult.risk/(targetnode.getIncidence(riskgraph)*4); //targetresult.incidence; //CAVE: currently calculated like this... to be discussed!
 		}
 	}
 
@@ -281,27 +288,36 @@ public class CreateResult {
 		newresult.add(nodetree.key,nodetree);
 				
 		//add links
-		TreeNode linktree = constructTreeLinks(nodetree,"LINKS","Links",english);
+		TreeNode linktree = constructTreeLinks(nodetree,"LINKS","Links",english,true);
 		newresult.add(linktree.key,linktree);
 		
 		return newresult;
 	}
 	
 	
-	public TreeNode constructTreeLinks(TreeNode nodetree, String typekey, String typelabel, boolean english) {
+	public TreeNode constructTreeLinks(TreeNode nodetree, String typekey, String typelabel, boolean english, boolean addIndirect) {
 		TreeNode newlinks = new TreeNode(typekey,typelabel); 
 		//now links -> for all nodes (with each other)
 		LinkResult link;
 		Node sourcenode;
 		Node targetnode;
+		OnlineNode onlinesource;
+		OnlineNode onlinetarget;
+		boolean constructLink = true;
 		Edge e;
 		EdgeStatistics stats;
 		for (String source : nodetree.getChildrenKeys()) {
 			for (String target : nodetree.getChildrenKeys()) {
 				sourcenode=graph.getNode(source);
-				targetnode=graph.getNode(target);;
+				targetnode=graph.getNode(target);
 				if (graph.hasEdge(riskgraph,sourcenode, targetnode)) { //ToDo add relations from other graphs
-					e = graph.getEdge(sourcenode, targetnode);
+					if (!addIndirect) {
+						onlinesource = (OnlineNode)nodetree.children.get(source);
+						onlinetarget = (OnlineNode)nodetree.children.get(target);
+						constructLink=onlinesource.istarget || onlinesource.isnew || onlinetarget.istarget || onlinetarget.isnew;
+					}
+					if (constructLink) {
+						e = graph.getEdge(sourcenode, targetnode);
 						link = new LinkResult();
 						link.source=source;
 						link.target=target;
@@ -318,10 +334,21 @@ public class CreateResult {
 							link.roundMe();
 						}
 						newlinks.add(source.concat(target),link);
+					}
 				}
 			}
 		}
 		return newlinks;
+	}
+	
+	public TreeNode clusterNode(boolean english) {
+		//create Node structure
+		TreeNode newresult;
+		if (hasRiskGraph)
+			newresult = new TreeNode("CLUSTER",this.graph.getClusterName(riskgraph, english));
+		else newresult = new TreeNode("CLUSTER","");
+		
+		return newresult;
 	}
 	
 	
@@ -329,7 +356,7 @@ public class CreateResult {
 		OnlineNode onlinenode;
 		
 		//first: single node
-		onlinenode = populateNode(node,false,true,english);
+		onlinenode = populateNode(node,true,true,english);
 		onlinenode.roundMe();
 		feature_nodes.add(onlinenode); 
 		
@@ -350,7 +377,7 @@ public class CreateResult {
 		nodetree.addAll(feature_nodes,true);
 		newresult.add(nodetree.key,nodetree);
 
-		TreeNode linktree = constructTreeLinks(nodetree,"LINKS","Links",english);
+		TreeNode linktree = constructTreeLinks(nodetree,"LINKS","Links",english,false);
 		newresult.add(linktree.key,linktree);
 		
 		return newresult;

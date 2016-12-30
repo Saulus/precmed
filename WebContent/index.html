@@ -2,7 +2,7 @@
 <header>
 <meta charset="utf-8">
 
-<title>Precision Medicine v0.9</title>
+<title>Precision Medicine v0.9b</title>
 <style>
 
 @import url(index.css);
@@ -48,7 +48,7 @@
 <div class="abstand_ver"> </div>
 <div class="superheading">Risk predictions, powered by the Elsevier Medical Graph</div>
 <div class="mainpart">
-	<span class="heading">Patient health record, for the last 12 months</span>
+	<span class="heading">Patient health record</span>
 	<ul class = "container_row basic_container">		
 		<li class="container_item item0">Patient's age: <input type="number" id="AGE" value="65" min="0" max="124" /></li>
 		<li class="abstand_hor" />
@@ -63,7 +63,7 @@
 	</ul>
 	<ul class="container_row selection_container">
 					<li class="container_item item2">
-						<div style="position: relative;"><b>Current diseases</b><div class="adder"><input type="button" class="button3" id="add_ICD" value="ADD" /></div></div>
+						<div style="position: relative;"><b>Current diseases</b>, <small>i.e. last 12 months</small> <div class="adder"><input type="button" class="button3" id="add_ICD" value="ADD" /></div></div>
 						<div>
 						<img class="container_image" src="img/doctor.png" align="top"/>
 							<select id="valuesICD" class="valueList" size="8" multiple></select>
@@ -71,7 +71,7 @@
 					</li>
 					<li class="abstand_hor" />
 					<li class="container_item item2">
-						<div style="position: relative;"><b>Current medications</b><div class="adder"><input type="button" class="button3" id="add_ATC" value="ADD" /></div></div>
+						<div style="position: relative;"><b>Current medications</b>, <small>i.e. last 12 months</small> <div class="adder"><input type="button" class="button3" id="add_ATC" value="ADD" /></div></div>
 						<div>
 							<img class="container_image" src="img/pills.png" align="top" />
 							<select id="valuesATC" class="valueList" size="8" multiple></select>
@@ -102,9 +102,10 @@
 			<li><a href="#LIST">List view</a></li>
 			<li><a href="#GRAPH">Graph view</a></li>
 		</ul>
+		<div id="clustertitle"></div>
 		<div id="LIST" >
-		<div class="chart_list">By absolute risk <table class="list" id="chart_abs"></table></div>
-		<div class="chart_list">By relative risk <table class="list" id="chart_rel"></table></div>
+		<div class="chart_list"><table class="list" id="chart_abs"></table></div>
+		<div class="chart_list"><table class="list" id="chart_rel"></table></div>
 		</div>
 		<div id="GRAPH" class="risks" style="display: none;" ><svg class="risks" id="thegraph"></svg>
 			<div id="nodeoverview" class="risks">
@@ -160,7 +161,7 @@
 			<td><input type="text" id="searchNode" class="searchBox" /><img class="button4" type="image" src="img/delete.png" id="clearSearchNode" value=".d." /></td>
 		</tr><tr>
 			<td>Node types to show: </td>
-			<td><label><input type="checkbox" name="nodetypes" value="ICD" checked> Diseases</label> <label><input type="checkbox" name="nodetypes" value="ATC" checked> Medications</label></td>
+			<td><label><input type="checkbox" name="nodetypes" value="ICD" checked> Diseases</label> <label><input type="checkbox" name="nodetypes" value="ICG" checked> Chapters</label> <label><input type="checkbox" name="nodetypes" value="ATC" checked> Medications</label></td>
 		</tr>
 		<tr>
 			<td><label for="prevalence">Node prevalence: </label></td>
@@ -181,7 +182,7 @@
 		</tr>
 		<tr>
 			<td>Link significance:</td>
-			<td><label><input type="radio" name="significance" value="ALL"> All</label> <label><input type="radio" name="significance" value="ONLY" checked> Significant only</label></td>
+			<td><label><input type="radio" name="significance" value="ALL" checked> All</label> <label><input type="radio" name="significance" value="ONLY"> Significant only</label></td>
 		</tr>
 		<tr>
 			<td>Link influence:</td>

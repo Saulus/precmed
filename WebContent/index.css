@@ -344,6 +344,7 @@ margin: auto;
   list-style: none;
    height: 530px; 
    width: 1050px;
+   text-align: center;
   
   
 -ms-box-orient: vertical;
@@ -361,12 +362,24 @@ margin: auto;
 
 }
 
+#clustertitle {
+padding:0;
+margin: auto;
+	width: 100%;
+	font-size: 1.2em;
+	height: 20px; 
+	
+	color: rgb(255, 130, 0);
+  font-weight: bold; 
+   text-align: center;
+}
+
 .chart_list {
 padding:0;
 margin: auto;
 	width: 100%;
 	font-size: 1em;
-	height: 256px; 
+	height: 240px; 
 	
 	color: black;
   font-weight: bold; 
@@ -381,7 +394,7 @@ font-weight: normal;
   margin: auto;
   font-size: 12px;
   text-align:left;
-  height: 92%; 
+  height: 100%; 
   width: 100%;
   overflow-x:auto;
   border-collapse: collapse;
@@ -517,7 +530,7 @@ margin: auto;
 
 #GRAPH.explore {
 	width: 1050px;
-	height: 890px; 
+	height: 870px; 
 }
 
 #thegraph {
@@ -535,7 +548,7 @@ margin: auto;
 
 #thegraph.explore {
 	width: 1050px; 
-	height: 890px; 
+	height: 870px; 
 }
 
 .hidden {
@@ -599,7 +612,7 @@ text {
 
 path.link {
   fill: none;
-  stroke-width: 1.5px;
+  stroke-width: 2.0px;
 }
 
 path.link.has_successor.lowers {

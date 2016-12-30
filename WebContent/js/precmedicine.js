@@ -22,6 +22,7 @@ if (mode=="EXPLORE") {
 }
 
 var simulation = d3.forceSimulation();
+var forceManyBody = d3.forceManyBody().strength(charge).theta(theta).distanceMax(chargeDistance);
 
 //shim Object.values
 Object.values = Object.values || (obj => Object.keys(obj).map(key => obj[key]));
@@ -34,7 +35,8 @@ var graphnodes = {},
 	graphlinks = {},
 	nodes = {},
 	links = {},
-	nodeClickInProgress=false;
+	nodeClickInProgress=false,
+	agecluster= "";
 var listtree = null;
 	
 var filtercriteria = {}; //single Criteria: variable: "nodevar", min: 0, max: 100
@@ -49,7 +51,7 @@ $.getJSON( ehealthurl+'Demo', function( jsondata ) {
 //reset input fields
 //Init = Reset
 drawUI();
-reset(); 
+reset(false); 
 
 // load("ATC","#leftValuesATC"); -->
 
@@ -302,7 +304,7 @@ $("#import").click(function () {
 });
 
 $("#demo").change(function () {
-	reset();
+	reset(false);
 	var myurl=ehealthurl+'Demo'+'?patient='+$("#demo").val();
 	$.getJSON( myurl, function( jsondata ) {
 		$.each(jsondata, function (key, value) {
@@ -316,7 +318,7 @@ $("#demo").change(function () {
 });
 
 $("#reset").click(function () {
-	reset();
+	reset(false);
 });
 
 
@@ -371,6 +373,10 @@ $("input[name=nodetypes]:checkbox").change(function () {
 });
 
 $("input[name=linkdepth]:radio").change(function () {
+	if ($('input[name=linkdepth]:checked', '#config_form').val()=="ALL")
+		charge=-3000;
+	else charge=-1000;
+	forceManyBody.strength(charge);
 	drawGraphs(); 
 });
 
@@ -438,10 +444,16 @@ $("#optionsEXPLORE").change(function () {
 	$("#EXPLOREselector").hide();
 });
 
+$("#CLUSTERAGE").change(function () {
+	reset(true); 
+	refreshGraphSingle($("#optionsEXPLORE option:selected").first().val());
+});
 
 
-
-
+$("#CLUSTERGENDER").change(function () {
+	reset(true); 
+	refreshGraphSingle($("#optionsEXPLORE option:selected").first().val());
+});
 
 
 
@@ -547,7 +559,7 @@ function move(from,to,intsort) {
 }
 
 
-function reset() {
+function reset(weakmode) {
 	if (mode=="RISKS") {
 		$("#valuesICD").find('option').remove();
 		$("#valuesATC").find('option').remove();
@@ -555,7 +567,7 @@ function reset() {
 		clearsearch("#optionsICD","#searchICD","ICD");
 		clearsearch("#optionsATC","#searchATC","ATC");
 	} else {
-		clearsearch("#optionsEXPLORE","#startEXPLORE","ALL");
+		if (!weakmode) clearsearch("#optionsEXPLORE","#startEXPLORE","ALL");
 	}
 
 	//remove all from graph
@@ -567,14 +579,16 @@ function reset() {
 	$('.nodeUL').empty();
 	
 	
-	resetFilter();
+	if (!weakmode) resetFilter();
 	resetSimulation();
+	clearClusterTitle ();
 	
 	graphdata=null;
 	graphnodes = {};
 	graphlinks = {};
 	nodes = {};
 	links = {};
+	agecluster= "";
 	nodeClickInProgress=false;
 	listtree = null;
 	number_focused=0;
@@ -586,7 +600,7 @@ function reset() {
 function resetSimulation() {
 	simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d; }).distance(linkDistance).strength(function(d){return d.linkStrength}))
-    .force("charge", d3.forceManyBody().strength(charge).theta(theta).distanceMax(chargeDistance))
+    .force("charge", forceManyBody)
     .force("center", d3.forceCenter($("#thegraph").width() / 2, $("#thegraph").height() / 2));
 	//.velocityDecay(friction);
 }
@@ -698,6 +712,7 @@ function refreshGraph(parameters) {
 		graphdata=jsondata;
 
 		selectNodesAndLinksRiskMode();
+		fillClusterTitle();
 		drawGraphs();
 		d3.select('#theImg').style("visibility","hidden");
 	});
@@ -708,6 +723,8 @@ function refreshGraphSingle(key) {
 	var postdata = {};
 	postdata.KEY=key;
 	postdata.lang=lang;
+	postdata.GENDER=$("#CLUSTERGENDER option:selected").first().val();
+	postdata.AGE=$("#CLUSTERAGE option:selected").first().val();
 	d3.select('#theImg').style("visibility","visible");
 	d3.json(ehealthurl+'Single').post(JSON.stringify(postdata),
 	  function (error,jsondata) {
@@ -716,6 +733,7 @@ function refreshGraphSingle(key) {
 		graphdata=jsondata;
 
 		selectNodesAndLinksExploreMode(key);
+		fillClusterTitle();
 		drawGraphs();
 		d3.select('#theImg').style("visibility","hidden");
 	});
@@ -784,6 +802,7 @@ function initLinks(mylinks,mynodes,existingLinks) {
 	if (!mylinks[Object.keys(mylinks)[0]].source.key) { //only if objects not already assigned
 			Object.keys(mylinks).forEach(function (key) {
 					//if (mylinks[key].source.key) break; //objects already assigned
+					mylinks[key].key=key;
 					sourceKey = mylinks[key].source;
 					targetKey = mylinks[key].target;
 					mylinks[key].source = mynodes[sourceKey];
@@ -819,6 +838,8 @@ function selectNodesAndLinksRiskMode() {
 	graphlinks=graphdata.children["GRAPH"].children["LINKS"].children;
 	graphnodes=graphdata.children["GRAPH"].children["NODES"].children;
 	
+	agecluster = graphdata.children["CLUSTER"].label;
+	
 	initNodes(graphnodes);
 	if (Object.keys(graphlinks).length>0)
 		initLinks(graphlinks,graphnodes,null);
@@ -829,6 +850,8 @@ function selectNodesAndLinksRiskMode() {
 
 function selectNodesAndLinksExploreMode(key) {
 	if (graphdata==null) { refreshGraphSingle(key); return; }
+	
+	agecluster = graphdata.children["CLUSTER"].label;
 	
 	//select new nodes and links
 	newlinks=graphdata.children["LINKS"].children;
@@ -843,8 +866,10 @@ function selectNodesAndLinksExploreMode(key) {
 			if ((exnode = doesNodeExist(newnodes[key],graphnodes)) == null) graphnodes[key]=newnodes[key]; //new node
 			else {
 				var isfocused = newnodes[key].isCurrentlyFocused;
+				var istarget = newnodes[key].istarget;
 				newnodes[key]=exnode; //node exists -> replace to find correct links
 				if (isfocused) newnodes[key].isCurrentlyFocused=true;
+				if (istarget) newnodes[key].istarget=true;
 			}
 		});
 	}
@@ -892,7 +917,7 @@ function drawGraphs () {
 
 //filters first
 function drawGraph() {
-	
+		
 	filterNodes();
 	var chartid="#thegraph";
 	var chart=d3.select(chartid);
@@ -927,7 +952,7 @@ function drawGraph() {
 	
 	var path = all_links
 		.selectAll("path.link")
-		.data(links_arr);
+		.data(links_arr, function(d) { return d.key; });
 	 path.exit().remove(); //EXIT
 	 
 	var pathEnter = path.enter().insert("svg:path") //ENTER
@@ -968,7 +993,7 @@ function drawGraph() {
                         nodeClickInProgress = false;
                         focusNode(d);
                     }
-				},100); 
+				},200); 
 			}
         })
 		.call(d3.drag()
@@ -976,10 +1001,7 @@ function drawGraph() {
           .on("drag", dragged)
           .on("end", dragended));
 		  
-	nodeEnter.append("circle")
-		.attr("fill",function(d) { 
-					return selectNodesColor(d);
-				});
+	nodeEnter.append("circle");
 	
 	nodeEnter
 		.append("text")
@@ -1003,6 +1025,9 @@ function drawGraph() {
 		.attr("r", function(d){ 
 				if (d.isCurrentlyFocused) d.radius=nodemaxradius; else d.radius=nodeminradius; 
 				return d.radius;})
+		.attr("fill",function(d) { 
+					return selectNodesColor(d);
+				})
 		;  
 		
 	  function dragstarted(d) {
@@ -1165,11 +1190,11 @@ function resetFilter() {
 	$('input[name=linkdepth]', '#config_form').filter('[value=DIRECT]').prop('checked', true);
 	
 	if (mode=="EXPLORE") {
-		$('input[name=significance]', '#config_form').filter('[value=ONLY]').prop('checked', true);
+		$('input[name=significance]', '#config_form').filter('[value=ALL]').prop('checked', true);
 		$('input[name=influence]', '#config_form').filter('[value=ONLY]').prop('checked', true);
 	}
 	else {
-		$('input[name=significance]', '#config_form').filter('[value=ONLY]').prop('checked', true);
+		$('input[name=significance]', '#config_form').filter('[value=ALL]').prop('checked', true);
 		$('input[name=influence]', '#config_form').filter('[value=ONLY]').prop('checked', true);
 	}
 	
@@ -1187,7 +1212,6 @@ function resetHidden() {
 
 function toBeFilteredOut(node) {
 	// all filter criteria goes here!
-	if (node.hideNode) return true;
 	if (node.isCurrentlyFocused) return false;
 	var filterout=false;
 	
@@ -1292,7 +1316,7 @@ function getFullLabelText(o,type) {
 	text = "";
 	Object.keys(info).forEach(function (key) {
 		if (!info[key].isnew) 
-			text = text + "<li><b>"+info[key].label+"</b></li>";
+			text = text + "<li><font color=\"darkred\">"+info[key].label+"</font></li>";
 		else text = text +"<li>"+info[key].label+"</li>";
 	});
 	return text;
@@ -1301,29 +1325,31 @@ function getFullLabelText(o,type) {
 var columns = [
     { head_en: 'Disease', head_de: 'Erkrankung', basecl: 'listtable disease',
       html: function(row) { return row.label; }, 
-	  is_ul: false },
+	  is_ul: false,
+	  add_by_type: true,
+	  addlabel_en_rel: ", by relative risk", addlabel_en_abs: ", by absolute risk", addlabel_de_rel: ", nach rel. Risiko", addlabel_de_abs: ", nach abs. Risiko"},
 	  
-	{ head_en: 'Group', head_de: 'Gruppe', basecl: 'listtable group',
+	{ head_en: 'Chapter', head_de: 'Kapitel', basecl: 'listtable group',
       html: function(row) { info=getRiskNode(row); return "<FONT COLOR="+color[info.typekey](info.clusterkey)+">"+info.clusterlabel+"</font>"; }, 
 	  is_ul: false },
 	  
-    { head_en: 'Risk (abs/rel)', head_de: 'Risiko (abs/rel)', basecl: 'listtable risk',
+    { head_en: 'Risk (abs/rel)  4 yrs', head_de: 'Risiko (abs/rel)  4 Jahre', basecl: 'listtable risk',
       html: function(row) { info=getRiskNode(row); return round(info.risk*100,0) + "% / " + round(info.rrisk,1); }, 
 	  is_ul: false },
 	  
-    { head_en: 'Prevalence / Incidence', head_de: 'Prävalenz / Incidenz', basecl: 'listtable prevalence',
-      html: function(row) { info=getRiskNode(row); return round(info.prevalence*100,1) + "% / " + round(info.incidence*100,1) +"% (at " + info.mean_age + ")"; }, 
+    { head_en: 'Prevalence / Incidence  1yr', head_de: 'Prävalenz / Incidenz  1 Jahr', basecl: 'listtable prevalence',
+      html: function(row) { info=getRiskNode(row); return round(info.prevalence*100,1) + "% / " + round(info.incidence*100,1) +"%<br> (at " + info.mean_age + ")"; }, 
 	  is_ul: false },
 	  
-    { head_en: 'Risk Factors ', head_de: 'Risikofaktoren', basecl: 'listtable factors',
+    { head_en: 'Risk Factors from literature', head_de: 'Risikofaktoren aus der Literatur', basecl: 'listtable factors',
       html: function(row) { return getFullLabelText(row,"has_risk_factor");  }, 
 	  is_ul: true },
 	  
-    { head_en: 'Diagnostic Procedures', head_de: 'Diagnostik', basecl: 'listtable diagnostics',
+    /*{ head_en: 'Diagnostic Procedures', head_de: 'Diagnostik', basecl: 'listtable diagnostics',
 		html: function(row) { return getFullLabelText(row,"has_diagnostic_procedure"); }, 
-	  is_ul: true },
+	  is_ul: true },*/
 		
-	{ head_en: 'Prevention', head_de: 'Prävention', basecl: 'listtable prevention',
+	{ head_en: 'Prevention from literature', head_de: 'Prävention aus der Literatur', basecl: 'listtable prevention',
       html: function(row) { return getFullLabelText(row,"has_prevention"); }, 
 	  is_ul: true }
 ];
@@ -1338,7 +1364,7 @@ function drawListGraph(type_pos,chartid) {
 	chart.selectAll("tbody").remove();
 	
 	var subtree=listtree[type_pos].children;
-
+	
 	var w = $(chartid).width(),
 	    h = $(chartid).height();
 	    /*x = d3.scale.linear().range([0, w]),
@@ -1352,7 +1378,16 @@ function drawListGraph(type_pos,chartid) {
 		.data(columns).enter()
 		.append('th')
 		//.attr('class', function(col) {return col.basecl})
-		.text(function(col) {if (engl) return col.head_en; else return col.head_de });	
+		.text(function(col) {
+			coltext=col.head_en;
+			if (!engl) coltext=col.head_de;
+			if (col.add_by_type) {
+				if (engl && type_pos=="REL") coltext=coltext+col.addlabel_en_rel;
+				if (engl && type_pos=="ABS") coltext=coltext+col.addlabel_en_abs;
+				if (!engl && type_pos=="REL") coltext=coltext+col.addlabel_de_rel;
+				if (!engl && type_pos=="ABS") coltext=coltext+col.addlabel_de_abs;
+			}
+			return coltext });	
 	
 	chart.append('tbody')
 		.selectAll('tr')
@@ -1599,6 +1634,16 @@ function wrap(text) {
 	  d3.select("#tooltip").classed("hidden", true);
 	};
 
+function fillClusterTitle () {
+	d3.select("#clustertitle")
+			.html("Cluster: <i>" + agecluster+"</i>");
+	//d3.select("#clustertitle").classed("hidden", false);
+}
+
+function clearClusterTitle () {
+	d3.select("#clustertitle")
+			.text(null);
+}
 
 /* my very own sorting function, as jQuery sort is not working in Chrome */
 function sortArray(array, intsort) {

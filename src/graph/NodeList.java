@@ -22,7 +22,7 @@ public class NodeList {
 			}
 			return exists;
 		}
-		if (!alternative_code.isEmpty() && nodes_by_alternative_code.containsKey(alternative_code)) {
+		if (!alternative_code.isEmpty() && nodes_by_alternative_code.containsKey(alternative_code) && nodes_by_alternative_code.get(alternative_code).getCode().isEmpty()) {
 			exists=nodes_by_alternative_code.get(alternative_code);
 			if (!readable_code.isEmpty() && !nodes.containsKey(readable_code)) {
 				exists.setCode(readable_code);

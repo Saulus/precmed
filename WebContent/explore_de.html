@@ -2,7 +2,7 @@
 <header>
 <meta charset="utf-8">
 
-<title>Elsevier Medical Graph v0.9</title>
+<title>Elsevier Medical Graph v0.9b</title>
 <style>
 
 @import url(index.css);
@@ -28,16 +28,31 @@
 <section id="global">
 <div class="mainpart">
 	<div class="container_row">
+		<div class="container_col">
 			<div class = "container_row">
-			<div style="margin: auto;font-size: 0.6em; text-align: center;"><img width=20 height=20 src="img/doctor.png" align="top"/> <img width=20 height=20 src="img/pills.png" align="top"/>
+					<div style="margin: auto;font-size: 0.6em; text-align: center;"></div>
+					<div style="margin: auto;font-size: 0.9em; text-align: center;">Cluster age: <select id="CLUSTERAGE">
+						<option value=0>0</option>
+						<option value=14>1-14</option>
+						<option value=40 selected>15-40</option>
+						<option value=66>41-66</option>
+						<option value=99>67-</option>
+						</select>
+						Gender: <select id="CLUSTERGENDER">
+						<option value=1>Female</option>
+						<option value=2 selected>Male</option>
+						</select>
+					</div>
 			</div>
-			<div style="margin: auto;font-size: 0.9em;line-height: 90%; text-align: left;">Explore diagnosis / medication: </div>
-			<div style="margin: auto;font-size: 0.9em; text-align: center;"><input type="text" id="startEXPLORE" class="searchBox" style="width: 400px;"/><input class="button4" type="image" src="img/delete.png" id="clearEXPLORE" value=".d." /></div>
+			<div class = "container_row">
+				<div style="margin: auto;font-size: 0.6em; text-align: center;"><img width=20 height=20 src="img/doctor.png" align="top"/> <img width=20 height=20 src="img/pills.png" align="top"/></div>
+				<div style="margin: auto;font-size: 0.9em;line-height: 90%; text-align: left;">Explore diagnosis / medication: </div>
+				<div style="margin: auto;font-size: 0.9em; text-align: center;"><input type="text" id="startEXPLORE" class="searchBox" style="width: 400px;"/><input class="button4" type="image" src="img/delete.png" id="clearEXPLORE" value=".d." /></div>
 			</div>
-			
-			<div style="margin: auto;font-size: 0.6em; text-align: center;"><input type="image" class="button2" src="img/delete.png" id="reset" value="Reset" />
+		</div>
+		<div style="margin: auto;font-size: 0.6em; text-align: center;"><input type="image" class="button2" src="img/delete.png" id="reset" value="Reset" />
 			<br>Reset all
-			</div>
+		</div>
 	</div>
 	<div id="EXPLOREselector" class="container_item selector">
 		<div class="adder"><input type="button" class="button3" id="EXPLOREselectorX" value="X" /></div>
@@ -49,6 +64,7 @@
 <div class="abstand_ver"> </div>
 <div class="superheading">The Elsevier Medical Graph [DE Version]</div>
 <div class="mainpart">
+	<div id="clustertitle"></div>
 		<div id="GRAPH" class="explore"><svg class="explore" id="thegraph"></svg>
 			<div id="nodeoverview" class="explore">
 				<div class="adder"><input type="button" class="button3" id="nodeoverviewX" value="X" /></div>
@@ -93,12 +109,12 @@
 		<tr><td colspan=2><hr></td></tr>
 		<tr>
 			<td>Link depth:</td>
-			<td><label><input type="radio" name="linkdepth" value="ALL"> All</label> <label><input type="radio" name="linkdepth" value="DIRECT" checked> Direct only</label>
+			<td><label><input type="radio" name="linkdepth" value="DIRECT" checked> Direct only</label>
 			<!--<label><input type="radio" name="linkdepth" value="CONNECTED" checked> Connected only (2+)</label>--></td>
 		</tr>
 		<tr>
 			<td>Link significance:</td>
-			<td><label><input type="radio" name="significance" value="ALL"> All</label> <label><input type="radio" name="significance" value="ONLY" checked> Significant only</label></td>
+			<td><label><input type="radio" name="significance" value="ALL" checked> All</label> <label><input type="radio" name="significance" value="ONLY"> Significant only</label></td>
 		</tr>
 		<tr>
 			<td>Link influence:</td>
@@ -150,7 +166,7 @@
 <script>
 document.getElementById("link_en").setAttribute("href",ehealthurl+"explore.html");
 	document.getElementById("link_de").setAttribute("href",ehealthurl+"explore_de.html");
-	document.getElementById("link_precmed").setAttribute("href",ehealthurl);
+	document.getElementById("link_precmed").setAttribute("href",ehealthurl+"index_de.html");
 </script>
 
 <script>

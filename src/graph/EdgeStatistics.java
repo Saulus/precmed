@@ -11,6 +11,8 @@ public class EdgeStatistics {
 	public int mean_age_of_incident_patients_with_condition_source=0;
 	public boolean isSignificant = false;
 	
+	public boolean isHighOdds = false; // to filter out unusual high odds ratios that rather hint to systemic irregularities
+	
 	public EdgeStatistics() {
 		
 	}

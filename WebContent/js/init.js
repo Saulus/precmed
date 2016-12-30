@@ -1,5 +1,5 @@
-	var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
-	//var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
+	//var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
+	var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
 	
 	var graphhurl = ehealthurl + "explore.html"; //window.location.protocol + "//" + window.location.host +  "/graph/";
 	
@@ -26,6 +26,7 @@
 	}*/
 	var colorNodes = {
 	  "ICD": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#ffaaaa","#990000"]),
+	  "ICG": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#fca7a7","#990000"]),
 	  "ATC": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#aaddff","#0033cc"]),
 	  "GEN": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#aaa","#000"]),
 	  "": d3.scaleOrdinal().domain(["OLD","NEW"]).range(["#aaa","#000"])

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import lists.NodeLabels;
+
 
 
 public class EdgeList {
@@ -35,12 +37,12 @@ public class EdgeList {
 			}
 	}
 	
-	public void addEdge(String relation,Node source, Node target) {
+	public void addEdge(String relation,Node source, Node target,  NodeLabels nodelabels) {
 		//Target -> Source
 		if (!edges_target_source.containsKey(target))
 			edges_target_source.put(target, new HashMap<Node,Edge>());
 		if (!edges_target_source.get(target).containsKey(source)) 
-			edges_target_source.get(target).put(source, new Edge(source,target));
+			edges_target_source.get(target).put(source, new Edge(source,target, nodelabels));
 		
 		Edge edge =  edges_target_source.get(target).get(source);
 		
@@ -61,11 +63,22 @@ public class EdgeList {
 	
 	
 	//adds edge if not present
-	public void addEdge(String relation,Node source, Node target, String graphname, double or,double beta,double pvalue,double number_relations,double proportion_of_incidents_have_source,double proportion_source_get_incidents,int mean_age_of_incident_patients_with_condition_source) {
-		this.addEdge(relation,source, target);
+	public void addEdge(String relation,Node source, Node target,  NodeLabels nodelabels, String graphname, double or,double beta,double pvalue,double number_relations,double proportion_of_incidents_have_source,double proportion_source_get_incidents,int mean_age_of_incident_patients_with_condition_source) {
+		this.addEdge(relation,source, target, nodelabels);
 		Edge e = edges_target_source.get(target).get(source);
 		e.addStatistics(graphname, or, pvalue, beta, number_relations, proportion_of_incidents_have_source, proportion_source_get_incidents, mean_age_of_incident_patients_with_condition_source);
 	
+	}
+	
+	/*
+	 * adds beta to intercept beta
+	 * e.g. for gender attribute (if it only models intercept)
+	 */
+	public void add2Beta(Node source,Node target, String graphname, double beta) {
+		//this.addEdge(relation,source, target);
+		Edge e = edges_target_source.get(target).get(source);
+		e.setBeta(graphname,e.getBeta(graphname) + beta);
+		e.setOR(graphname,Math.exp(e.getBeta(graphname)));
 	}
 	
 	
@@ -77,14 +90,20 @@ public class EdgeList {
 		return edges_target_source.keySet();
 	}
 	
+	/*
+	 * Calculates risk for logit model
+	 * Returns zero risk if one edge might be systemic irregularity (see filter in edges)
+	 */
 	public double getRisk4Target(Node target, HashMap<Node,Double> features, String graphname) {
 			double coeffs;
 			if (edges_target_source.get(target).containsKey(interceptnode))
 				coeffs = edges_target_source.get(target).get(interceptnode).getBeta(graphname); //Math.log(targetlist.get(target).get(Consts.intercept).or);
 			else coeffs=0.;
 			for (Node feature : features.keySet()) {
-				if (edges_target_source.get(target).containsKey(feature))
-					coeffs += features.get(feature) * edges_target_source.get(target).get(feature).getBeta(graphname); // Math.log(targetlist.get(target).get(feature).or); 
+				if (edges_target_source.get(target).containsKey(feature)) {
+					if (edges_target_source.get(target).get(feature).filterOut(graphname)) return 0; //FILTER
+					coeffs += features.get(feature) * edges_target_source.get(target).get(feature).getBeta(graphname); // Math.log(targetlist.get(target).get(feature).or);
+				}
 			}
 			double odds = Math.exp(coeffs);
 			double prob = odds / (1+odds);
