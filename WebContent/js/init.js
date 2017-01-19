@@ -1,5 +1,5 @@
-	//var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
-	var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
+	var ehealthurl = 'http://localhost:8080/PrecisionMedicine/';
+	//var ehealthurl = window.location.protocol + "//" + window.location.host +  "/PrecisionMedicine/";
 	
 	var graphhurl = ehealthurl + "explore.html"; //window.location.protocol + "//" + window.location.host +  "/graph/";
 	
