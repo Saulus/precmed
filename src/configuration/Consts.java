@@ -20,8 +20,11 @@ public final class Consts {
 	public static final String icdattribute="ICD_";
 	public static final String icdgroupattribute="ICG_";
 	
-	public static final int topX = 3; //return only Top n risks 
-	public static final int maxOdds = 5; // to filter out unusual high odds ratios that rather hint to systemic irregularities
+	/** Which risks to return?? **/
+	public static final int topX = 3; //return only Top n risks -> will be decided by frontend 
+	public static final int maxOdds = 5; // to filter out unusual high odds ratios that rather hint to systemic irregularities; Standard: 5
+	public static final boolean filterRelATAbs = true; //filter out risks from absolute list if rel risk <= 1 (see AbsComp for Sorting); Standard: true
+	
 	
 	public static final String riskRelationName = "has_successor";
 	

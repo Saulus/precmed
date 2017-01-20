@@ -69,8 +69,8 @@ public class CreateResult {
 	class AbsComp implements Comparator<OnlineNode>{
 	    @Override
 	    public int compare(OnlineNode e1, OnlineNode e2) {
-	    	if(e2.rrisk>1 && e1.rrisk<=1) return 1; 
-	    	if(e1.rrisk>1 && e2.rrisk<=1) return -1;
+	    	if(Consts.filterRelATAbs && e2.rrisk>1 && e1.rrisk<=1) return 1; 
+	    	if(Consts.filterRelATAbs && e1.rrisk>1 && e2.rrisk<=1) return -1;
 	    	if(e2.risk > e1.risk) return 1;
 	    	if(e2.risk < e1.risk) return -1;
 	        return 0;
