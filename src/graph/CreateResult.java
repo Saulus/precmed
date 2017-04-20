@@ -28,7 +28,7 @@ public class CreateResult {
 	HashMap<Node,Double> features;
 	List<OnlineNode> feature_nodes = new ArrayList<OnlineNode>();
 	List<OnlineNode> risks = new ArrayList<OnlineNode>();
-	List<OnlineNode> risks_relative = new ArrayList<OnlineNode>();
+	//List<OnlineNode> risks_relative = new ArrayList<OnlineNode>();
 	HashSet<OnlineNode> othernodes = new HashSet<OnlineNode>();
 	
 	
@@ -37,6 +37,7 @@ public class CreateResult {
 		public String label;
 		public double risk = 1; //absolute risk: KNR , KH
 		public double rrisk = 1; //relative risk
+		public double displayScore = 1; //abs risk x rel risk x NodeDisplayScore/100
 		//public double auc = 0;
 		public double prevalence = 0;
 		public double incidence = 0;
@@ -48,6 +49,7 @@ public class CreateResult {
 		public boolean isnew = true;
 		public boolean istarget = true;
 		public int topX = 0;
+		public int rawScore; //0 - 100
 		
 		public OnlineNode() {	
 		}
@@ -55,6 +57,7 @@ public class CreateResult {
 		public void roundMe () {
 				risk = (double) Math.round(risk*10000)/10000;
 				if (rrisk != 0) rrisk = (double) Math.round(rrisk*100)/100;
+				if (displayScore != 0) displayScore = (double) Math.round(displayScore*1000)/1000;
 				//if (prevalence != 0) prevalence = (double) Math.round(prevalence*10000)/10000;
 				//if (incidence != 0) incidence = (double) Math.round(incidence*10000)/10000;
 				if (mean_age != 0) mean_age = (double) Math.round(mean_age*10)/10;
@@ -69,10 +72,12 @@ public class CreateResult {
 	class AbsComp implements Comparator<OnlineNode>{
 	    @Override
 	    public int compare(OnlineNode e1, OnlineNode e2) {
-	    	if(Consts.filterRelATAbs && e2.rrisk>1 && e1.rrisk<=1) return 1; 
-	    	if(Consts.filterRelATAbs && e1.rrisk>1 && e2.rrisk<=1) return -1;
-	    	if(e2.risk > e1.risk) return 1;
-	    	if(e2.risk < e1.risk) return -1;
+	    	//if(Consts.filterRelATAbs && e2.rrisk>1 && e1.rrisk<=1) return 1; 
+	    	//if(Consts.filterRelATAbs && e1.rrisk>1 && e2.rrisk<=1) return -1;
+	    	//if(e2.risk > e1.risk) return 1;
+	    	//if(e2.risk < e1.risk) return -1;
+	    	if(e2.displayScore> e1.displayScore) return 1;
+	    	if(e2.displayScore < e1.displayScore) return -1;
 	        return 0;
 	    }
 	}
@@ -129,18 +134,6 @@ public class CreateResult {
 		this.nodelabels = nodelabels;
 		this.clusterlabels = clusterlabels;
 	}
-	
-	
-	protected void addRisks2Result (HashMap<Node,Double> features, Node targetnode, OnlineNode targetresult) {
-		targetresult.risk=graph.getRisk4Target(targetnode, features, riskgraph);
-		if (targetresult.risk < 0.01) targetresult.risk = 0; //basically: exclude risks <1%
-		else {
-			//double baserisk = graph.getRisk(key, baseriskfeatures);
-			//if (baserisk==0.) baserisk =result.incidence;
-			//result.rrisk=result.risk/baserisk;
-			targetresult.rrisk=targetresult.risk/(targetnode.getIncidence(riskgraph)*4); //targetresult.incidence; //CAVE: currently calculated like this... to be discussed!
-		}
-	}
 
 	
 	protected OnlineNode populateNode (Node node, boolean istarget, boolean isnew, boolean english) {
@@ -166,6 +159,23 @@ public class CreateResult {
 		return result;
 	}
 	
+	protected void addRisks2Result (HashMap<Node,Double> features, Node targetnode, OnlineNode targetresult) {
+		targetresult.risk=graph.getRisk4Target(targetnode, features, riskgraph);
+		if (targetresult.risk < 0.01) targetresult.risk = 0; //basically: exclude risks <1%
+		else {
+			//double baserisk = graph.getRisk(key, baseriskfeatures);
+			//if (baserisk==0.) baserisk =result.incidence;
+			//result.rrisk=result.risk/baserisk;
+			targetresult.rrisk=targetresult.risk/(targetnode.getIncidence(riskgraph)*4); //targetresult.incidence; //CAVE: currently calculated like this... to be discussed!
+		}
+	}
+	
+	protected void computeDisplayScore (OnlineNode targetresult) {
+		targetresult.rawScore=this.nodelabels.getDisplayScore(targetresult.key);
+		targetresult.displayScore=targetresult.risk*targetresult.rrisk*targetresult.rawScore/100;
+		
+	}
+	
 	
 	
 	public void createNodes(HashMap<Node,Double> features, boolean english, int topX) {
@@ -186,19 +196,20 @@ public class CreateResult {
 						//only new diseases and treatments (as graph models are build like that!)
 						onlinenode = populateNode(target,true,true,english);	
 						addRisks2Result(features,target,onlinenode);
+						computeDisplayScore(onlinenode);
 						onlinenode.roundMe();
 						risks.add(onlinenode);
 					}
 			}
 			//sort and limit
-			risks_relative = new ArrayList<OnlineNode>(risks);
+			//risks_relative = new ArrayList<OnlineNode>(risks);
 			Collections.sort(risks, new AbsComp());
-			Collections.sort(risks_relative, new RelComp());
+			//Collections.sort(risks_relative, new RelComp());
 			
 			risks =  risks.subList(0, topX);
 			for (int i=0; i<risks.size(); i++) risks.get(i).topX=i;
-			risks_relative = risks_relative.subList(0, topX);
-			for (int i=0; i<risks_relative.size(); i++) risks_relative.get(i).topX=i;
+			//risks_relative = risks_relative.subList(0, topX);
+			//for (int i=0; i<risks_relative.size(); i++) risks_relative.get(i).topX=i;
 		}
 		
 		
@@ -225,21 +236,26 @@ public class CreateResult {
 	public TreeNode listNode(boolean english) {
 		//create Node structure
 		TreeNode newresult = new TreeNode("LIST","List");
-		TreeNode rel;
-		TreeNode abs;
+		//TreeNode rel;
+		//TreeNode abs;
+		TreeNode score;
 		if (english) {
-			rel = new TreeNode("REL","Relative");
-			abs = new TreeNode("ABS","Absolute");
+			//rel = new TreeNode("REL","Relative");
+			//abs = new TreeNode("ABS","Absolute");
+			score = new TreeNode("SCORE","Score");
 		} else {
-			rel = new TreeNode("REL","Relativ");
-			abs = new TreeNode("ABS","Absolut");
+			//rel = new TreeNode("REL","Relativ");
+			//abs = new TreeNode("ABS","Absolut");
+			score = new TreeNode("SCORE","Score");
 		}
-		newresult.add(rel.key,rel);
-		newresult.add(abs.key,abs);
+		//newresult.add(rel.key,rel);
+		//newresult.add(abs.key,abs);
+		newresult.add(score.key,score);
 		//has_successor
 		
-		unravelRiskNodes(rel,risks_relative,english);
-		unravelRiskNodes(abs,risks,english);
+		//unravelRiskNodes(rel,risks_relative,english);
+		//unravelRiskNodes(abs,risks,english);
+		unravelRiskNodes(score,risks,english);
 		return newresult;
 	}
 	
@@ -283,7 +299,7 @@ public class CreateResult {
 		HashSet<OnlineNode> combresults = new HashSet<OnlineNode>(feature_nodes); //use HashSet to add a node only once
 	
 		combresults.addAll(risks);
-		combresults.addAll(risks_relative);
+		//combresults.addAll(risks_relative);
 		//combresults.addAll(othernodes);//ToDo: Re-Include other relations
 		
 		TreeNode nodetree = new TreeNode("NODES","Nodes");

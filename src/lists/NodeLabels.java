@@ -19,6 +19,7 @@ class NodeInfo {
 	public String label_eng; 
 	public String typekey;
 	public String clusterkey;
+	public int displayScore = 0; //0-1 00
 	
 	public NodeInfo (String code, String de, String eng, String typekey, String clusterkey) {
 		this.code=code;
@@ -27,6 +28,11 @@ class NodeInfo {
 		this.typekey=typekey;
 		this.clusterkey=clusterkey;
 	}
+	
+	public void addScore (int score) {
+		this.displayScore=score;
+	}
+	
 }
 
 public class NodeLabels {
@@ -92,6 +98,38 @@ public class NodeLabels {
 		}
 	}
 	
+	public void readInDisplayScore(String file) throws Exception {
+		Charset inputCharset = Charset.forName("ISO-8859-1");
+		CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file), inputCharset), ';', '"'); //UTF-8?
+		List<String[]> readIn = reader.readAll();
+		reader.close();
+		String[] headerline = readIn.get(0);
+		readIn.remove(0);
+		//assign colnumbers for columns needed
+		int codecol=0;
+		int score_col=3;
+		//and re-assign
+		for (int i =0; i<headerline.length; i++) {
+			if (headerline[i].equals("Code")) codecol=i;
+			if (headerline[i].contains("Relevanz-Score")) score_col=i;
+		}
+		if (readIn.size()==0 )
+			throw new Exception("Configuration File " + file + "is empty");
+		for (String[] nextline : readIn) {
+			if (nextline.length>1) {
+				this.addDisplayScore(nextline[codecol],nextline[score_col]);
+			}
+		}
+	}
+	
+	public void addDisplayScore(String code, String raw_score) {
+		if (codeExists(code)) {
+			int i = 0;
+			if (!raw_score.isEmpty()) i = Integer.parseInt(raw_score);
+			this.nodes_by_code.get(code).addScore(i);
+		}
+	}
+	
 	public void addLabel (String code, String label_de, String label_eng, String typekey, String clusterkey) {
 		NodeInfo l = new NodeInfo(code,label_de,label_eng, typekey, clusterkey);
 		nodes_by_code.put(code,l);
@@ -145,5 +183,11 @@ public class NodeLabels {
 		}
 		return list;
 	} 
+	
+	public int getDisplayScore (String code) {
+		if (this.codeExists(code))
+			return this.nodes_by_code.get(code).displayScore;
+		else return 0;
+	}
 
 }

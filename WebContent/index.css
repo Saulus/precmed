@@ -56,7 +56,10 @@ INPUT {
 		border-color:#fbfbfb; 
 }
 
-input[type="number"] {
+input[id="demo"] {
+   width:50px;
+}
+input[id="AGE"] {
    width:50px;
 }
 
@@ -342,7 +345,7 @@ border:1px solid #ccc;}
 padding:0;
 margin: auto;
   list-style: none;
-   height: 530px; 
+   height: 500px; 
    width: 1050px;
    text-align: center;
   
@@ -386,6 +389,18 @@ margin: auto;
    text-align: left;
 }
 
+.chart_list_full {
+padding:0;
+margin: auto;
+	width: 100%;
+	font-size: 1em;
+	height: 450px; 
+	
+	color: black;
+  font-weight: bold; 
+   text-align: left;
+}
+
 .list {
 padding-top: 15px;
 font-weight: normal;
@@ -396,7 +411,7 @@ font-weight: normal;
   text-align:left;
   height: 100%; 
   width: 100%;
-  overflow-x:auto;
+  overflow-x:none;
   border-collapse: collapse;
 }
 
@@ -442,29 +457,35 @@ vertical-align:top;
 }
 
 .group {
-	width: 15%;
+	/*width: 15%;*/
+}
+
+.score {
+	width: 40px;
+	text-align: center;
 }
 
 .risk {
-	width: 7%;
+	width: 75px;
 	text-align: center;
 }
 .prevalence {
-	width: 8%;
+	width: 80px;
 	text-align: center;
 }
 
 .factors {
-	width: 17%;
+	width: 18%;
 
 }
-.diagnostics {
+
+/*.diagnostics {
 	width: 17%;
 
-}
+}*/
 
 .prevention{
-	width: 16%;
+	width: 18%;
 }
 
 .tableUL {
@@ -472,6 +493,23 @@ vertical-align:top;
     padding-left: 10px;
     margin: 0;
 }
+
+.scoreAdjust {
+	width: 40px;
+	text-align: center;
+	border:3px solid #fff;
+	background-color: #eee;
+	color: #aaa;
+	padding-right: 0px;
+	padding-left: 0px;
+}
+
+
+.scoreAdjustInput {
+	width: 35px;
+}
+
+
 
 .tableUL.multicolumn2 {
   -moz-column-count: 2;
@@ -525,7 +563,7 @@ margin: auto;
 
 #GRAPH.risks {
 	width: 1050px;
-	height: 530px; 
+	height: 500px; 
 }
 
 #GRAPH.explore {
@@ -542,7 +580,7 @@ margin: auto;
 }
 
 #thegraph.risks {
-	height: 530px; 
+	height: 500px; 
 	width: 1050px;
 }
 

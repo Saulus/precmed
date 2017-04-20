@@ -61,6 +61,7 @@ public class Graph extends HttpServlet {
 	public static String label_path = Init.getWebInfPath() + "/graphdata/node_labels";
 	public static String clusterFile = Init.getWebInfPath() + "/graphdata/cluster_and_types.csv";
 	public static String graph_path = Init.getWebInfPath() + "/graphdata/graph";
+	public static String displayScoreFile = Init.getWebInfPath() + "/graphdata/icd3_eval.csv";
 	
 	private boolean hasError = false;
 	
@@ -77,6 +78,14 @@ public class Graph extends HttpServlet {
         	nodelabels.readInLists(label_path);
         } catch (Exception e) {
     		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + label_path);
+    		System.err.println(e.getMessage());
+    		e.printStackTrace();
+    	}
+        
+        try {
+        	nodelabels.readInDisplayScore(displayScoreFile);
+        } catch (Exception e) {
+    		System.err.println("Fehler gefunden beim Einlesen der Konfiguration aus " + displayScoreFile);
     		System.err.println(e.getMessage());
     		e.printStackTrace();
     	}

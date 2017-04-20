@@ -36,7 +36,8 @@ var graphnodes = {},
 	nodes = {},
 	links = {},
 	nodeClickInProgress=false,
-	agecluster= "";
+	agecluster= "",
+	tooltipVisible=false;
 var listtree = null;
 	
 var filtercriteria = {}; //single Criteria: variable: "nodevar", min: 0, max: 100
@@ -901,8 +902,9 @@ function drawGraphs () {
 			//d3.select("#thegraph").selectAll("*").remove();
 			$("#chart_graph").hide();
 			$("#charts").show();
-			drawListGraph("ABS","#chart_abs");
-			drawListGraph("REL","#chart_rel");
+			/*drawListGraph("ABS","#chart_abs");
+			drawListGraph("REL","#chart_rel");*/
+			drawListGraph("SCORE","#chart_score");
 			//also pre-draw graph 
 			//drawGraph();
 		} else if (graphdata != null && active == 1) {
@@ -1180,7 +1182,7 @@ function resetFilter() {
 	$( "#searchNode" ).val("");
 	$( "#searchNodeLabel" ).val("");
 	
-	$('input[name=topX]', '#view_form').filter('[value=3]').prop('checked', true);
+	$('input[name=topX]', '#view_form').filter('[value=5]').prop('checked', true);
 	
 	$( "#thresholdslider" ).slider( "value",0);
 	$( "#threshold" ).val(">= " + $( "#thresholdslider" ).slider( "value")+ "%");
@@ -1326,12 +1328,16 @@ var columns = [
     { head_en: 'Disease', head_de: 'Erkrankung', basecl: 'listtable disease',
       html: function(row) { return row.label; }, 
 	  is_ul: false,
-	  add_by_type: true,
+	  add_by_type: false,
 	  addlabel_en_rel: ", by relative risk", addlabel_en_abs: ", by absolute risk", addlabel_de_rel: ", nach rel. Risiko", addlabel_de_abs: ", nach abs. Risiko"},
 	  
 	{ head_en: 'Chapter', head_de: 'Kapitel', basecl: 'listtable group',
       html: function(row) { info=getRiskNode(row); return "<FONT COLOR="+color[info.typekey](info.clusterkey)+">"+info.clusterlabel+"</font>"; }, 
 	  is_ul: false },
+	  
+	  { head_en: 'Score', head_de: 'Score', basecl: 'listtable score',
+	      html: function(row) { info=getRiskNode(row); return round(info.displayScore,2); }, 
+		  is_ul: false },
 	  
     { head_en: 'Risk (abs/rel)  4 yrs', head_de: 'Risiko (abs/rel)  4 Jahre', basecl: 'listtable risk',
       html: function(row) { info=getRiskNode(row); return round(info.risk*100,0) + "% / " + round(info.rrisk,1); }, 
@@ -1351,7 +1357,12 @@ var columns = [
 		
 	{ head_en: 'Prevention from literature', head_de: 'Prävention aus der Literatur', basecl: 'listtable prevention',
       html: function(row) { return getFullLabelText(row,"has_prevention"); }, 
-	  is_ul: true }
+	  is_ul: true },
+	  
+	  { head_en: 'Set view priority', head_de: 'einstellen', basecl: 'listtable scoreAdjust',
+	      html: function(row) { info=getRiskNode(row); return "<input type=\"number\" class=\"scoreAdjustInput\" id=\""+row.key+"\" value=\""+info.rawScore+"\" min=\"0\" max=\"100\" step=\"5\" />"; }, 
+		  is_ul: false,
+	      is_adjust: true },
 ];
 
 function drawListGraph(type_pos,chartid) {
@@ -1405,23 +1416,6 @@ function drawListGraph(type_pos,chartid) {
 		})*/
 		/*.on("mousemove", mousemoveTooltipNode)
           .on("mouseout", mouseoutTooltip)*/
-		  .on("dblclick", function(node){
-			  d=getRiskNode(node);
-            nodeClickInProgress=false;
-            click_link(d);
-        })
-		.on("click",  function(d){
-			// this is a hack so that click doesnt fire on the1st click of a dblclick
-            if (!nodeClickInProgress ) {
-                nodeClickInProgress = true;
-                setTimeout(function(){
-                    if (nodeClickInProgress) { 
-                        nodeClickInProgress = false;
-                        switch2graph(getRiskNode(d));
-                    }
-				},200); 
-			}
-        })
 		.selectAll('td')
 		.data(function(row, i) {
 			// evaluate column objects against the current row
@@ -1430,6 +1424,8 @@ function drawListGraph(type_pos,chartid) {
 			   d3.keys(c).forEach(function(k) {
 				   cell[k] = typeof c[k] == 'function' ? c[k](row,i) : c[k];
 			   });
+			   cell["key"]=row.key; //added to allow click later 
+			   cell["label"]=row.label;
 			   return cell;
 		   });
 		}).enter()
@@ -1437,6 +1433,25 @@ function drawListGraph(type_pos,chartid) {
 		.attr('class', function(col) {return col.basecl})
 		.on("mousemove", mousemoveTooltipListCell)
           .on("mouseout", mouseoutTooltip)
+          .on("dblclick", function(row){
+        	  if (!row.is_adjust) {
+				  //d=getRiskNode(node);
+	            nodeClickInProgress=false;
+	            click_link(node.label);
+        	  }
+        })
+		.on("click",  function(row){
+			// this is a hack so that click doesnt fire on the1st click of a dblclick
+            if (!row.is_adjust && !nodeClickInProgress ) {
+                nodeClickInProgress = true;
+                setTimeout(function(){
+                    if (nodeClickInProgress) { 
+                        nodeClickInProgress = false;
+                        switch2graph(row.key);
+                    }
+				},200); 
+			}
+        })
 		 .html(function(col) {
 			 text = col.html;
 			 if (col.is_ul) {
@@ -1475,18 +1490,18 @@ function wrap(text) {
   });
  }
 
-  function click_link(d) {
-	    if (d.children) return;
-		if (d.label)
-			window.open("https://www.clinicalkey.com/#!/search/"+d.label.substr(d.label.indexOf(" ")));
+  function click_link(nodelabel) {
+	    //if (d.children) return;
+		if (nodelabel)
+			window.open("https://www.clinicalkey.com/#!/search/"+nodelabel.substr(nodelabel.indexOf(" ")+1));
 	  }
 	  
- function switch2graph(d) {
-	 if (d.children) return;
-	 if (d.key) {
+ function switch2graph(nodekey) {
+	 //if (d.children) return;
+	 if (nodekey) {
 		 //focus
 		Object.keys(graphnodes).forEach(function (key) {
-			if (key == d.key) {
+			if (key == nodekey) {
 				graphnodes[key].isCurrentlyFocused=true;
 			} else graphnodes[key].isCurrentlyFocused=false;
 			graphnodes[key].hideNode=false;
@@ -1541,96 +1556,106 @@ function wrap(text) {
  //REAL TOOLTIP FUNCTIONS
  
  	var mousemoveTooltipNode = function(d) {
-	  resetTooltipContent ();
-	  var mytext="";
-	  if (d.label) mytext=d.label; else mytext=d.key;
-	   if (!d.istarget && !d.children && mode=="RISKS") mytext=mytext + " (existing)";
-	  
-	  d3.select("#tooltip #t_heading")
-			.text(mytext);
-	  if (!d.children) {
-		  /*d3.select("#tooltip #t_type")
-			.html("<td width=50>Type:</td><td>" +  d.typelabel+"</td>");*/
-			d3.select("#tooltip #t_cluster")
-			.html("<td width=80>Group:</td><td>" +  d.clusterlabel+"</td>");
-			if (mode=="RISKS" && d.istarget) {
-			  d3.select("#tooltip #t_absrisk")
-				.html("<td>Risk:</td><td>" +round(d.risk,2) + "</td>");
-			  d3.select("#tooltip #t_relrisk")
-				.html("<td>Rel. risk:</td><td>" + round(d.rrisk,1)+"</td>");
-			}
-			if (d.typekey == "ICD") {
-				d3.select("#tooltip #t_prev")
-				.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
-			  d3.select("#tooltip #t_inc")
-				.html("<td>Incidence:</td><td>" + round(d.incidence * 100,1)+ "%"+"</td>");
-			  d3.select("#tooltip #t_mean_age")
-				.html("<td>Mean age of incidents:</td><td>" + d.mean_age+"</td>");
-			  d3.select("#tooltip #t_link")
-				.html("<td colspan=2>Double-click for ClinicalKey Content</td>");
-			} else {
-				if (d.typekey == "ATC" || d.key == "HOSP")
+ 		if (!tooltipVisible) {
+ 			tooltipVisible=true;
+		  resetTooltipContent ();
+		  var mytext="";
+		  if (d.label) mytext=d.label; else mytext=d.key;
+		   if (!d.istarget && !d.children && mode=="RISKS") mytext=mytext + " (existing)";
+		  
+		  d3.select("#tooltip #t_heading")
+				.text(mytext);
+		  if (!d.children) {
+			  /*d3.select("#tooltip #t_type")
+				.html("<td width=50>Type:</td><td>" +  d.typelabel+"</td>");*/
+				d3.select("#tooltip #t_cluster")
+				.html("<td width=80>Group:</td><td>" +  d.clusterlabel+"</td>");
+				if (mode=="RISKS" && d.istarget) {
+				  d3.select("#tooltip #t_absrisk")
+					.html("<td>Risk:</td><td>" +round(d.risk,2) + "</td>");
+				  d3.select("#tooltip #t_relrisk")
+					.html("<td>Rel. risk:</td><td>" + round(d.rrisk,1)+"</td>");
+				}
+				if (d.typekey == "ICD") {
 					d3.select("#tooltip #t_prev")
-						.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
-				else 
-					d3.select("#tooltip #t_prev")
-						.html("<td>Prevalence:</td><td>" + round(d.prevalence,1)+"</td>");
-			}
-	 }
+					.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
+				  d3.select("#tooltip #t_inc")
+					.html("<td>Incidence:</td><td>" + round(d.incidence * 100,1)+ "%"+"</td>");
+				  d3.select("#tooltip #t_mean_age")
+					.html("<td>Mean age of incidents:</td><td>" + d.mean_age+"</td>");
+				  d3.select("#tooltip #t_link")
+					.html("<td colspan=2>Double-click for ClinicalKey Content</td>");
+				} else {
+					if (d.typekey == "ATC" || d.key == "HOSP")
+						d3.select("#tooltip #t_prev")
+							.html("<td>Prevalence:</td><td>" + round(d.prevalence * 100,1)+ "%"+"</td>");
+					else 
+						d3.select("#tooltip #t_prev")
+							.html("<td>Prevalence:</td><td>" + round(d.prevalence,1)+"</td>");
+				}
+		 }
+ 		}
 	 
 	 positionTooltip();
 		
 	};
 	
 	var mousemoveTooltipLink = function(d) {
-		resetTooltipContent ();
-	 significant = d.isSignificant;;
-	 if (significant)
-		 sig_str=" *";
-	 else sig_str="";
-	  d3.select("#tooltip #t_heading")
-			.text(d.source.key + " to " + d.target.key + sig_str);
-	  d3.select("#tooltip #t_type")
-			.html("<td width=80>Type:</td><td>" +  d.typelabel+"</td>");
-		d3.select("#tooltip #t_absrisk")
-			.html("<td>Odds ratio:</td><td>" + round(d.odds,3)+"</td>");
-		 d3.select("#tooltip #t_inc")
-			.html("<td>Incidence:</td><td>" + round(d.proportion_source_get_incidents* 100,2)+"%"+"</td>");
-		  d3.select("#tooltip #t_mean_age")
-			.html("<td>Mean age:</td><td>" + d.mean_age+"</td>");
-		if (significant)
-		  d3.select("#tooltip #t_link")
-			.html("<td colspan=2>* significant correlation</td>");
+		if (!tooltipVisible) {
+ 			tooltipVisible=true;
+				resetTooltipContent ();
+			 significant = d.isSignificant;;
+			 if (significant)
+				 sig_str=" *";
+			 else sig_str="";
+			  d3.select("#tooltip #t_heading")
+					.text(d.source.key + " to " + d.target.key + sig_str);
+			  d3.select("#tooltip #t_type")
+					.html("<td width=80>Type:</td><td>" +  d.typelabel+"</td>");
+				d3.select("#tooltip #t_absrisk")
+					.html("<td>Odds ratio:</td><td>" + round(d.odds,3)+"</td>");
+				 d3.select("#tooltip #t_inc")
+					.html("<td>Incidence:</td><td>" + round(d.proportion_source_get_incidents* 100,2)+"%"+"</td>");
+				  d3.select("#tooltip #t_mean_age")
+					.html("<td>Mean age:</td><td>" + d.mean_age+"</td>");
+				if (significant)
+				  d3.select("#tooltip #t_link")
+					.html("<td colspan=2>* significant correlation</td>");
+		}
 		
 		positionTooltip();
 	};
 	
 	
 	var mousemoveTooltipListCell = function(col) {
-		resetTooltipContent ();
-		text = col.html;
-		colnumber=Math.floor(text.length/800)+1;
-		d3.select("#tooltip").style("width",(colnumber*240)+"px");
+		if (!col.is_adjust && !tooltipVisible) {
+ 			tooltipVisible=true;
+			resetTooltipContent ();
+			text = col.html;
+			colnumber=Math.floor(text.length/800)+1;
+			d3.select("#tooltip").style("width",(colnumber*240)+"px");
+			
+			head=col.head_en;
+			if (lang==("DE")) head=col.head_de;
+		  d3.select("#tooltip #t_heading")
+			.text(head);
+	
+			var ulclass = "tableUL";
+			if (colnumber>1) ulclass=ulclass+" multicolumn"+colnumber;
+			text='<ul class="'+ulclass+'">'+text+'</ul>';
+		  d3.select("#tooltip #t_type")
+				.html(text);
+			
+			if (col.head_en=="Risk (abs/rel)" || col.head_en=="Prevalence / Incidence")
+				d3.select("#tooltip #t_link")
+					.html("<td colspan=2>* based on age+gender cluster</td>");
+		}
+		if (!col.is_adjust) { positionTooltip();}
 		
-		head=col.head_en;
-		if (lang==("DE")) head=col.head_de;
-	  d3.select("#tooltip #t_heading")
-		.text(head);
-
-		var ulclass = "tableUL";
-		if (colnumber>1) ulclass=ulclass+" multicolumn"+colnumber;
-		text='<ul class="'+ulclass+'">'+text+'</ul>';
-	  d3.select("#tooltip #t_type")
-			.html(text);
-		
-		if (col.head_en=="Risk (abs/rel)" || col.head_en=="Prevalence / Incidence")
-			d3.select("#tooltip #t_link")
-				.html("<td colspan=2>* based on age+gender cluster</td>");
-
-		positionTooltip();
 	};
 
 	var mouseoutTooltip = function() {
+		tooltipVisible=false;
 	  d3.select("#tooltip").classed("hidden", true);
 	};
 
